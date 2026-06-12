@@ -61,7 +61,7 @@
                 <div>
                     <h3 th:text="${catEntry.key.name}"></h3>
                     <small style="color:var(--gray-500, #9ca3af);">
-                        <span th:text="${#lists.size(catEntry.value.values().stream().flatMap(List::stream).collect(java.util.stream.Collectors.toList()))}"></span> Eintraege
+                        <span th:text="${#maps.size(catEntry.value)}"></span> Uebungen
                     </small>
                 </div>
                 <span class="category-toggle">▶</span>
