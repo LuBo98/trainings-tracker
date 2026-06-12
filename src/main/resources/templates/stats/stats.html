@@ -15,7 +15,7 @@
         <!-- Filter Form -->
         <div class="card">
             <div class="card-header">Zeitraum und Bereich waehlen</div>
-            <form th:action="@{/stats}" method="get" style="display:grid; grid-template-columns: 1fr 1fr 1fr auto; gap:1rem; align-items:end;">
+            <form th:action="@{/stats}" method="get" class="stats-filter-form" style="display:grid; grid-template-columns: 1fr 1fr 1fr auto; gap:1rem; align-items:end;">
                 <div class="form-group" style="margin-bottom:0;">
                     <label for="startDate">Von</label>
                     <input type="date" id="startDate" name="startDate" class="form-control" required th:value="${startDateVal}">

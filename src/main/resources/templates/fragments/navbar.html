@@ -6,19 +6,19 @@
 <!-- Navbar Fragment -->
 <nav class="navbar" th:fragment="navbar">
     <a class="navbar-brand" th:href="@{/auth/dashboard}">Training Tracker</a>
-    <button class="hamburger" onclick="toggleNav()" aria-label="Menu">
+    <button class="hamburger" id="hamburgerBtn" aria-label="Menu" aria-expanded="false">
         <span></span>
         <span></span>
         <span></span>
     </button>
-    <ul class="navbar-nav" sec:authorize="isAuthenticated()">
+    <ul class="navbar-nav" id="navMenu" sec:authorize="isAuthenticated()">
         <li><a th:href="@{/auth/dashboard}">Dashboard</a></li>
         <li><a th:href="@{/categories}">Kategorien</a></li>
         <li><a th:href="@{/workouts}">Workouts</a></li>
         <li><a th:href="@{/workouts/bulk-landing}">Bulk Workout</a></li>
         <li><a th:href="@{/stats}">Statistik</a></li>
         <li>
-            <form th:action="@{/auth/logout}" method="post" style="display:inline;">
+            <form th:action="@{/auth/logout}" method="post">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <button type="submit" class="btn btn-outline btn-sm">Logout</button>
             </form>
@@ -34,23 +34,37 @@
 
 <!-- Mobile nav toggle script -->
 <script>
-function toggleNav() {
-    var nav = document.querySelector('.navbar-nav');
-    var hamburger = document.querySelector('.hamburger');
-    nav.classList.toggle('open');
-    hamburger.classList.toggle('active');
-}
-// Close mobile nav when clicking a link
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.navbar-nav a').forEach(function(link) {
-        link.addEventListener('click', function() {
-            var nav = document.querySelector('.navbar-nav');
-            var hamburger = document.querySelector('.hamburger');
-            if (nav) nav.classList.remove('open');
-            if (hamburger) hamburger.classList.remove('active');
+(function() {
+    var hamburger = document.getElementById('hamburgerBtn');
+    var navMenu = document.getElementById('navMenu');
+
+    if (hamburger && navMenu) {
+        hamburger.addEventListener('click', function() {
+            navMenu.classList.toggle('open');
+            hamburger.classList.toggle('active');
+            var expanded = hamburger.getAttribute('aria-expanded') === 'true';
+            hamburger.setAttribute('aria-expanded', !expanded);
         });
-    });
-});
+
+        // Close menu when clicking a link
+        navMenu.querySelectorAll('a').forEach(function(link) {
+            link.addEventListener('click', function() {
+                navMenu.classList.remove('open');
+                hamburger.classList.remove('active');
+                hamburger.setAttribute('aria-expanded', 'false');
+            });
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!navMenu.contains(e.target) && !hamburger.contains(e.target)) {
+                navMenu.classList.remove('open');
+                hamburger.classList.remove('active');
+                hamburger.setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
+})();
 </script>
 
 </body>
