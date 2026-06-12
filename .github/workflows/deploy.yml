@@ -1,0 +1,46 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
+
+      - name: Test SSH connection
+        run: ssh -o StrictHostKeyChecking=no root@195.20.225.70 "echo 'SSH connection OK'"
+
+      - name: Upload code to server
+        run: |
+          rsync -avz --delete \
+            -e "ssh -o StrictHostKeyChecking=no" \
+            src/ pom.xml Dockerfile \
+            root@195.20.225.70:/opt/training-tracker/
+
+      - name: Build and deploy
+        run: |
+          ssh -o StrictHostKeyChecking=no root@195.20.225.70 "
+            cd /opt/training-tracker && \
+            docker build -t training-tracker-app . && \
+            docker compose -f docker-compose-prod.yml up -d && \
+            echo 'Deploy successful'
+          "
+
+      - name: Verify deployment
+        run: |
+          sleep 10
+          ssh -o StrictHostKeyChecking=no root@195.20.225.70 "
+            docker ps --format '{{.Names}}: {{.Status}}' | grep training-tracker
+          "
