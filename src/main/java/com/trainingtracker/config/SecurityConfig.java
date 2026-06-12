@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
@@ -57,11 +58,16 @@ public class SecurityConfig {
                 .failureUrl("/auth/login?error=true")
                 .permitAll()
             )
+            .rememberMe(remember -> remember
+                .key("training-tracker-secure-key-2026")
+                .tokenValiditySeconds(7 * 24 * 60 * 60) // 7 Tage
+                .rememberMeParameter("remember-me")
+            )
             .logout(logout -> logout
                 .logoutUrl("/auth/logout")
                 .logoutSuccessUrl("/auth/login?logout=true")
                 .invalidateHttpSession(true)
-                .deleteCookies("JSESSIONID")
+                .deleteCookies("JSESSIONID", "remember-me")
                 .permitAll()
             )
             .headers(headers -> headers
