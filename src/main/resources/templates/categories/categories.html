@@ -5,6 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kategorien - Training Tracker</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .inline-exercise-form {
+            display: none;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--card-bg, #1a1a2e);
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color, #333);
+        }
+        .inline-exercise-form.visible {
+            display: block;
+        }
+        .inline-exercise-form .form-row {
+            display: flex;
+            gap: 0.5rem;
+            align-items: flex-end;
+        }
+        .inline-exercise-form .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        .toggle-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0.25rem 0.5rem;
+            color: var(--success-color, #22c55e);
+            line-height: 1;
+        }
+        .toggle-btn:hover {
+            background: rgba(34, 197, 94, 0.1);
+            border-radius: 0.25rem;
+        }
+    </style>
 </head>
 <body>
     <nav th:replace="~{fragments/navbar :: navbar}"></nav>
@@ -25,6 +60,8 @@
                     <small style="color:var(--gray-500);"><span th:text="${#lists.size(category.exercises)}"></span> Uebungen</small>
                 </div>
                 <div class="d-flex gap-1">
+                    <button type="button" class="toggle-btn" th:attr="data-target='exercise-form-'+${category.id}"
+                            onclick="toggleExerciseForm(this)" title="Uebung hinzufuegen">+</button>
                     <a th:href="@{'/exercises/category/' + ${category.id}}" class="btn btn-outline btn-sm">Uebungen</a>
                     <a th:href="@{'/categories/edit/' + ${category.id}}" class="btn btn-outline btn-sm">Bearbeiten</a>
                     <form th:action="@{'/categories/delete/' + ${category.id}}" method="post" style="display:inline;" onsubmit="return confirm('Kategorie wirklich loeschen? Alle Uebungen und Workouts werden ebenfalls geloescht.');">
@@ -33,7 +70,38 @@
                     </form>
                 </div>
             </div>
+            <!-- Inline Exercise Form -->
+            <div class="inline-exercise-form" th:id="'exercise-form-' + ${category.id}">
+                <form th:action="@{/exercises}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <input type="hidden" name="categoryId" th:value="${category.id}"/>
+                    <input type="hidden" name="redirect" value="categories"/>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="'name-' + ${category.id}">Uebungsname</label>
+                            <input type="text" id="'name-' + ${category.id}" name="name" class="form-control" required placeholder="z.B. Bankdruecken"/>
+                        </div>
+                        <div class="form-group">
+                            <label for="'desc-' + ${category.id}">Beschreibung (optional)</label>
+                            <input type="text" id="'desc-' + ${category.id}" name="description" class="form-control" placeholder="z.B. Freihantel"/>
+                        </div>
+                        <button type="submit" class="btn btn-success btn-sm">Speichern</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="toggleExerciseForm(this)">Abbrechen</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
+    <script>
+        function toggleExerciseForm(btn) {
+            // Find the inline-exercise-form - either via data-target or closest parent
+            let form = btn.dataset.target ? document.getElementById(btn.dataset.target) 
+                          : btn.closest('.inline-exercise-form');
+            form.classList.toggle('visible');
+            if (form.classList.contains('visible')) {
+                form.querySelector('input[name="name"]').focus();
+            }
+        }
+    </script>
 </body>
 </html>

@@ -94,14 +94,18 @@ public class ExerciseController {
     public String createExercise(@RequestParam String name,
                                  @RequestParam(required = false) String description,
                                  @RequestParam Long categoryId,
+                                 @RequestParam(required = false, defaultValue = "exercises") String redirect,
                                  @AuthenticationPrincipal UserDetails userDetails,
                                  RedirectAttributes redirectAttributes) {
         try {
             Long userId = getCurrentUserId(userDetails);
             exerciseService.create(name, description, categoryId, userId);
-            redirectAttributes.addFlashAttribute("success", "Exercise created successfully");
+            redirectAttributes.addFlashAttribute("success", "Uebung erstellt!");
         } catch (RuntimeException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        if ("categories".equals(redirect)) {
+            return "redirect:/categories";
         }
         return "redirect:/exercises/category/" + categoryId;
     }

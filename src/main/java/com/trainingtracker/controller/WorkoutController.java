@@ -50,7 +50,18 @@ public class WorkoutController {
                                Model model) {
         Long userId = getCurrentUserId(userDetails);
         List<com.trainingtracker.entity.WorkoutEntry> recentWorkouts = workoutService.getRecentWorkouts(userId);
-        model.addAttribute("workouts", recentWorkouts);
+        
+        // Group by category, then by exercise within each category
+        Map<Category, Map<com.trainingtracker.entity.Exercise, List<com.trainingtracker.entity.WorkoutEntry>>> byCategory = new java.util.LinkedHashMap<>();
+        for (com.trainingtracker.entity.WorkoutEntry entry : recentWorkouts) {
+            Category cat = entry.getExercise().getCategory();
+            com.trainingtracker.entity.Exercise ex = entry.getExercise();
+            byCategory.computeIfAbsent(cat, k -> new java.util.LinkedHashMap<>())
+                     .computeIfAbsent(ex, k -> new java.util.ArrayList<>())
+                     .add(entry);
+        }
+        
+        model.addAttribute("categoryEntries", byCategory);
         return "workouts/workouts";
     }
 
