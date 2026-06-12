@@ -16,7 +16,7 @@
                 <span style="color:var(--gray-500);"> / </span>
                 <h1 style="display:inline;" th:text="${category.name}"></h1>
             </div>
-            <div class="d-flex gap-1">
+            <div class="d-flex gap-1 btn-group-mobile">
                 <a th:href="@{'/workouts/bulk?categoryId=' + ${category.id}}" class="btn btn-success">+ Bulk Workout</a>
                 <a th:href="@{'/exercises/new?categoryId=' + ${category.id}}" class="btn btn-primary">+ Neue Uebung</a>
             </div>
@@ -31,7 +31,7 @@
                     <p th:if="${exercise.description}" th:text="${exercise.description}" style="color:var(--gray-500);"></p>
                     <small style="color:var(--gray-500);"><span th:text="${#lists.size(exercise.workoutEntries)}"></span> Eintraege</small>
                 </div>
-                <div class="d-flex gap-1">
+                <div class="d-flex gap-1 btn-group-mobile">
                     <a th:href="@{'/workouts/log?exerciseId=' + ${exercise.id}}" class="btn btn-success btn-sm">Workout eintragen</a>
                     <a th:href="@{'/workouts/exercise/' + ${exercise.id}}" class="btn btn-outline btn-sm">Verlauf</a>
                     <a th:href="@{'/exercises/edit/' + ${exercise.id}}" class="btn btn-outline btn-sm">Bearbeiten</a>

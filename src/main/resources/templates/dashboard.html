@@ -5,6 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Training Tracker</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .quick-access-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        @media (max-width: 768px) {
+            .quick-access-grid {
+                grid-template-columns: 1fr;
+            }
+            .quick-access-grid .btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
 </head>
 <body>
     <nav th:replace="~{fragments/navbar :: navbar}"></nav>
@@ -37,7 +53,7 @@
 
         <div class="card">
             <div class="card-header">Schnellzugriff</div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+            <div class="quick-access-grid">
                 <a th:href="@{/categories/new}" class="btn btn-primary">Neue Kategorie anlegen</a>
                 <a th:href="@{/stats}" class="btn btn-outline">Statistik ansehen</a>
             </div>

@@ -32,6 +32,7 @@
             gap: 0.5rem; padding: 0.25rem 0;
             border-bottom: 1px solid var(--border-color, #333);
             font-size: 0.9rem;
+            align-items: center;
         }
         .workout-entry-row:last-child { border-bottom: none; }
         .entry-date { color: var(--gray-500, #9ca3af); }
@@ -43,6 +44,21 @@
         .difficulty-3 { background: #ea580c; color: white; }
         .difficulty-4 { background: #dc2626; color: white; }
         .difficulty-5 { background: #7c3aed; color: white; }
+
+        @media (max-width: 768px) {
+            .workout-entry-row {
+                grid-template-columns: 1fr 1fr auto;
+                gap: 0.25rem;
+                padding: 0.5rem 0;
+            }
+            .workout-entry-row > span:nth-child(2),
+            .workout-entry-row > span:nth-child(3) {
+                display: contents;
+            }
+            .exercise-entries {
+                padding-left: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -50,7 +66,7 @@
     <div class="container">
         <div th:replace="~{fragments/navbar :: alerts}"></div>
         <h1 class="mb-2">Workout-Verlauf</h1>
-        
+
         <div th:if="${#maps.isEmpty(categoryEntries)}" class="card text-center">
             <p>Noch keine Workouts eingetragen. Traegt dein erstes Workout ein!</p>
             <a th:href="@{/categories}" class="btn btn-primary mt-1">Zu den Kategorien</a>
@@ -66,28 +82,28 @@
                 </div>
                 <span class="category-toggle">▶</span>
             </div>
-            
+
             <div class="exercise-entries">
                 <div th:each="exEntry : ${catEntry.value}" class="exercise-group">
                     <div class="exercise-name">
-                        <a th:href="@{'/workouts/exercise/' + ${exEntry.key.id}}" 
+                        <a th:href="@{'/workouts/exercise/' + ${exEntry.key.id}}"
                            th:text="${exEntry.key.name}"></a>
                         <small style="color:var(--gray-500, #9ca3af);">
                             (<span th:text="${#lists.size(exEntry.value)}"></span> Eintraege)
                         </small>
                     </div>
-                    
+
                     <div th:each="w : ${exEntry.value}" class="workout-entry-row">
                         <span class="entry-date" th:text="${#temporals.format(w.workoutDate, 'dd.MM.yyyy')}"></span>
                         <span><span th:text="${w.sets}"></span> x <span th:text="${w.reps}"></span></span>
                         <span th:text="${w.weight} + ' kg'"></span>
                         <span>
-                            <span class="difficulty-badge" 
+                            <span class="difficulty-badge"
                                   th:classappend="'difficulty-' + ${w.difficulty}"
                                   th:text="${w.difficulty == 1 ? 'Einfach' : (w.difficulty == 2 ? 'Moderat' : (w.difficulty == 3 ? 'Anstrengend' : (w.difficulty == 4 ? 'Sehr anstrengend' : 'Nicht geschafft')))}"></span>
                         </span>
                         <span>
-                            <a th:href="@{'/workouts/delete/' + ${w.id}}" 
+                            <a th:href="@{'/workouts/delete/' + ${w.id}}"
                                class="btn btn-danger btn-sm"
                                onclick="return confirm('Eintrag wirklich loeschen?');">✕</a>
                         </span>

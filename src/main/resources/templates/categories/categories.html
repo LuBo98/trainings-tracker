@@ -59,7 +59,7 @@
                     <p th:if="${category.description}" th:text="${category.description}" style="color:var(--gray-500);"></p>
                     <small style="color:var(--gray-500);"><span th:text="${#lists.size(category.exercises)}"></span> Uebungen</small>
                 </div>
-                <div class="d-flex gap-1">
+                <div class="d-flex gap-1 btn-group-mobile">
                     <button type="button" class="toggle-btn" th:attr="data-target='exercise-form-'+${category.id}"
                             onclick="toggleExerciseForm(this)" title="Uebung hinzufuegen">+</button>
                     <a th:href="@{'/exercises/category/' + ${category.id}}" class="btn btn-outline btn-sm">Uebungen</a>
@@ -94,8 +94,7 @@
     </div>
     <script>
         function toggleExerciseForm(btn) {
-            // Find the inline-exercise-form - either via data-target or closest parent
-            let form = btn.dataset.target ? document.getElementById(btn.dataset.target) 
+            let form = btn.dataset.target ? document.getElementById(btn.dataset.target)
                           : btn.closest('.inline-exercise-form');
             form.classList.toggle('visible');
             if (form.classList.contains('visible')) {

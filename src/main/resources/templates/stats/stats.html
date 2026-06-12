@@ -74,7 +74,7 @@
         <!-- Charts -->
         <div th:if="${stats != null and not stats.isEmpty()}" class="card mt-2">
             <div class="card-header">Graphen</div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; padding:1rem;">
+            <div class="charts-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; padding:1rem;">
                 <div>
                     <h3 style="margin-bottom:0.5rem;">Volumen pro Tag (kg)</h3>
                     <canvas id="volumeChart" height="250"></canvas>
@@ -106,22 +106,17 @@
     </div>
 
     <script th:inline="javascript">
-        // Toggle exercise selector
         function toggleExerciseSelect() {
             var scope = document.getElementById('scope').value;
             document.getElementById('exerciseSelectDiv').style.display = (scope === 'exercise') ? 'block' : 'none';
         }
-        // Initialize on load
         toggleExerciseSelect();
 
-        // Chart data from server
         var chartData = /*[[${chartData}]]*/ {};
 
-        // Chart color palette
         var colors = ['#6366f1','#f59e0b','#10b981','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899'];
 
         if (chartData && chartData.labels) {
-            // Volume per day chart
             new Chart(document.getElementById('volumeChart'), {
                 type: 'bar',
                 data: {
@@ -136,11 +131,11 @@
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: true,
                     scales: { y: { beginAtZero: true } }
                 }
             });
 
-            // Difficulty per day chart
             new Chart(document.getElementById('difficultyChart'), {
                 type: 'line',
                 data: {
@@ -156,13 +151,13 @@
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: true,
                     scales: { y: { min: 1, max: 5, ticks: {
                         callback: function(v) { return ['','Einfach','Moderat','Anstrengend','Sehr anstrengend','Nicht geschafft'][v] || ''; }
                     }}}
                 }
             });
 
-            // Weight development chart - filter out zero weights (bodyweight exercises)
             var weightData = (chartData.weights || []).map(function(w, i) {
                 return w > 0 ? w : null;
             });
@@ -187,6 +182,7 @@
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: true,
                     scales: {
                         y: {
                             beginAtZero: false,
@@ -201,7 +197,6 @@
                 }
             });
 
-            // Sets and Reps chart - normalized for visibility
             new Chart(document.getElementById('setsRepsChart'), {
                 type: 'bar',
                 data: {
@@ -225,6 +220,7 @@
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: true,
                     scales: { y: { beginAtZero: true } },
                     plugins: {
                         tooltip: {
@@ -241,7 +237,6 @@
                 }
             });
 
-            // Category breakdown (doughnut)
             if (chartData.categoryBreakdown) {
                 new Chart(document.getElementById('categoryBreakdownChart'), {
                     type: 'doughnut',
@@ -252,7 +247,7 @@
                             backgroundColor: colors.slice(0, chartData.categoryBreakdown.labels.length)
                         }]
                     },
-                    options: { responsive: true }
+                    options: { responsive: true, maintainAspectRatio: true }
                 });
             }
         }
