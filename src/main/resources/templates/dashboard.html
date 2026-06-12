@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Training Tracker</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <a class="navbar-brand" th:href="@{/dashboard}">Training Tracker</a>
+        <ul class="navbar-nav">
+            <li><a th:href="@{/dashboard}">Dashboard</a></li>
+            <li><a th:href="@{/categories}">Kategorien</a></li>
+            <li><a th:href="@{/workouts}">Workouts</a></li>
+            <li><a th:href="@{/stats}">Statistik</a></li>
+            <li>
+                <form th:action="@{/auth/logout}" method="post" style="display:inline;">
+                    <button type="submit" class="btn btn-outline btn-sm">Logout</button>
+                </form>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <h1 class="mb-2">Willkommen!</h1>
+
+        <div class="dashboard-grid">
+            <div class="stat-card">
+                <a th:href="@{/categories}" style="text-decoration:none; color:inherit;">
+                    <div class="stat-value">K</div>
+                    <div class="stat-label">Kategorien verwalten</div>
+                </a>
+            </div>
+            <div class="stat-card">
+                <a th:href="@{/workouts}" style="text-decoration:none; color:inherit;">
+                    <div class="stat-value">W</div>
+                    <div class="stat-label">Workouts eintragen</div>
+                </a>
+            </div>
+            <div class="stat-card">
+                <a th:href="@{/stats}" style="text-decoration:none; color:inherit;">
+                    <div class="stat-value">S</div>
+                    <div class="stat-label">Statistik ansehen</div>
+                </a>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Schnellzugriff</div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+                <a th:href="@{/categories/new}" class="btn btn-primary">Neue Kategorie anlegen</a>
+                <a th:href="@{/stats}" class="btn btn-outline">Statistik ansehen</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">So funktioniert's</div>
+            <ol style="padding-left:1.5rem; line-height:2;">
+                <li>Erstelle <strong>Kategorien</strong> (z.B. Oberkoerper, Untenkoerper, Cardio)</li>
+                <li>Fuege in jeder Kategorie <strong>Uebungen</strong> hinzu (z.B. Bankdruecken, Kniebeugen)</li>
+                <li>Trage deine <strong>Workouts</strong> ein mit Sets, Wiederholungen und Gewicht</li>
+                <li>Analysiere deine <strong>Statistik</strong> ueber beliebige Zeitaeraume</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

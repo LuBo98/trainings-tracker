@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uebungsverlauf - Training Tracker</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <a class="navbar-brand" th:href="@{/dashboard}">Training Tracker</a>
+        <ul class="navbar-nav">
+            <li><a th:href="@{/dashboard}">Dashboard</a></li>
+            <li><a th:href="@{/categories}">Kategorien</a></li>
+            <li><a th:href="@{/workouts}">Workouts</a></li>
+            <li><a th:href="@{/stats}">Statistik</a></li>
+            <li><form th:action="@{/auth/logout}" method="post" style="display:inline;"><button type="submit" class="btn btn-outline btn-sm">Logout</button></form></li>
+        </ul>
+    </nav>
+    <div class="container">
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        <div class="d-flex justify-between align-center mb-2">
+            <div>
+                <a th:href="@{/workouts}" style="color:var(--gray-500); text-decoration:none;">Workouts</a>
+                <span style="color:var(--gray-500);"> / </span>
+                <h1 style="display:inline;" th:text="${exercise.name}"></h1>
+            </div>
+            <a th:href="@{'/workouts/log?exerciseId=' + ${exercise.id}}" class="btn btn-success">+ Workout eintragen</a>
+        </div>
+        <div class="card">
+            <p style="color:var(--gray-500);">Kategorie: <strong th:text="${exercise.category.name}"></strong></p>
+            <p th:if="${exercise.description}" th:text="${exercise.description}" style="color:var(--gray-500);"></p>
+        </div>
+        <div th:if="${entries.isEmpty()}" class="card text-center"><p>Noch keine Eintraege fuer diese Uebung.</p></div>
+        <div class="card" th:if="${not entries.isEmpty()}">
+            <table class="table">
+                <thead><tr><th>Datum</th><th>Sets</th><th>Wdh.</th><th>Gewicht</th><th>Volumen</th><th>Anstrengung</th><th>Notizen</th><th>Aktionen</th></tr></thead>
+                <tbody>
+                    <tr th:each="entry : ${entries}">
+                        <td th:text="${#temporals.format(entry.workoutDate, 'dd.MM.yyyy')}"></td>
+                        <td th:text="${entry.sets}"></td>
+                        <td th:text="${entry.reps}"></td>
+                        <td th:text="${entry.weight} + ' kg'"></td>
+                        <td th:text="${entry.sets * entry.reps * entry.weight} + ' kg'"></td>
+                        <td>
+                            <span class="difficulty-badge" th:classappend="'difficulty-' + ${entry.difficulty}"
+                                  th:text="${entry.difficulty == 1} ? 'Einfach' : (${entry.difficulty == 2} ? 'Moderat' : (${entry.difficulty == 3} ? 'Anstrengend' : (${entry.difficulty == 4} ? 'Sehr anstrengend' : 'Nicht geschafft')))">
+                            </span>
+                        </td>
+                        <td th:text="${entry.notes != null} ? ${entry.notes} : '-'"></td>
+                        <td>
+                            <form th:action="@{'/workouts/delete/' + ${entry.id}}" method="post" style="display:inline;" onsubmit="return confirm('Eintrag wirklich loeschen?');">
+                                <button type="submit" class="btn btn-danger btn-sm">Loeschen</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="d-flex gap-1 mt-2">
+            <a th:href="@{'/stats?scope=exercise&exerciseId=' + ${exercise.id}}" class="btn btn-outline">Statistik ansehen</a>
+            <a th:href="@{'/exercises/category/' + ${exercise.category.id}}" class="btn btn-outline">Zurueck</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,19 @@
+# Environment files with secrets
+.env
+
+# Build output
+target/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker volumes (H2 data)
+data/

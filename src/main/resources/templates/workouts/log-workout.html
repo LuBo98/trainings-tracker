@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout eintragen - Training Tracker</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <a class="navbar-brand" th:href="@{/dashboard}">Training Tracker</a>
+        <ul class="navbar-nav">
+            <li><a th:href="@{/dashboard}">Dashboard</a></li>
+            <li><a th:href="@{/categories}">Kategorien</a></li>
+            <li><a th:href="@{/workouts}">Workouts</a></li>
+            <li><a th:href="@{/stats}">Statistik</a></li>
+            <li><form th:action="@{/auth/logout}" method="post" style="display:inline;"><button type="submit" class="btn btn-outline btn-sm">Logout</button></form></li>
+        </ul>
+    </nav>
+    <div class="container">
+        <h1 class="mb-2">Workout eintragen: <span th:text="${exercise.name}"></span></h1>
+        <div class="card">
+            <form th:action="@{/workouts/log}" method="post">
+                <input type="hidden" name="exerciseId" th:value="${exercise.id}">
+                <div class="form-group">
+                    <label for="workoutDate">Datum</label>
+                    <input type="date" id="workoutDate" name="workoutDate" class="form-control" required th:value="${todayDate}">
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1rem;">
+                    <div class="form-group">
+                        <label for="sets">Sets</label>
+                        <input type="number" id="sets" name="sets" class="form-control" required min="1" max="100" value="3">
+                    </div>
+                    <div class="form-group">
+                        <label for="reps">Wiederholungen</label>
+                        <input type="number" id="reps" name="reps" class="form-control" required min="1" max="200" value="10">
+                    </div>
+                    <div class="form-group">
+                        <label for="weight">Gewicht (kg)</label>
+                        <input type="number" id="weight" name="weight" class="form-control" required min="0" step="0.5" value="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="notes">Notizen (optional)</label>
+                    <textarea id="notes" name="notes" class="form-control" maxlength="500" placeholder="z.B. Gefuehl, Technik, Kommentare..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Anstrengung</label>
+                    <div class="difficulty-scale">
+                        <label class="difficulty-option">
+                            <input type="radio" name="difficulty" value="1">
+                            <span class="difficulty-label">Einfach</span>
+                        </label>
+                        <label class="difficulty-option">
+                            <input type="radio" name="difficulty" value="2">
+                            <span class="difficulty-label">Moderat</span>
+                        </label>
+                        <label class="difficulty-option">
+                            <input type="radio" name="difficulty" value="3" checked>
+                            <span class="difficulty-label">Anstrengend</span>
+                        </label>
+                        <label class="difficulty-option">
+                            <input type="radio" name="difficulty" value="4">
+                            <span class="difficulty-label">Sehr anstrengend</span>
+                        </label>
+                        <label class="difficulty-option">
+                            <input type="radio" name="difficulty" value="5">
+                            <span class="difficulty-label">Nicht geschafft</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="d-flex gap-1">
+                    <button type="submit" class="btn btn-success">Eintragen</button>
+                    <a th:href="@{'/exercises/category/' + ${exercise.category.id}}" class="btn btn-outline">Abbrechen</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

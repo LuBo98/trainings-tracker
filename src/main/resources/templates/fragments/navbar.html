@@ -1,0 +1,14 @@
+<nav class="navbar" th:fragment="navbar">
+    <a class="navbar-brand" th:href="@{/dashboard}">Training Tracker</a>
+    <ul class="navbar-nav">
+        <li><a th:href="@{/dashboard}">Dashboard</a></li>
+        <li><a th:href="@{/categories}">Kategorien</a></li>
+        <li><a th:href="@{/workouts}">Workouts</a></li>
+        <li><a th:href="@{/stats}">Statistik</a></li>
+        <li>
+            <form th:action="@{/auth/logout}" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-outline btn-sm">Logout</button>
+            </form>
+        </li>
+    </ul>
+</nav>

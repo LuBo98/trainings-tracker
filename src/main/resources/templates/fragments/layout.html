@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head><title>fragments</title></head>
+<body>
+
+<!-- Navbar Fragment -->
+<nav class="navbar" th:fragment="navbar">
+    <a class="navbar-brand" th:href="@{/dashboard}">Training Tracker</a>
+    <ul class="navbar-nav" sec:authorize="isAuthenticated()">
+        <li><a th:href="@{/dashboard}">Dashboard</a></li>
+        <li><a th:href="@{/categories}">Kategorien</a></li>
+        <li><a th:href="@{/workouts}">Workouts</a></li>
+        <li><a th:href="@{/stats}">Statistik</a></li>
+        <li>
+            <form th:action="@{/auth/logout}" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-outline btn-sm">Logout</button>
+            </form>
+        </li>
+    </ul>
+</nav>
+
+</body>
+</html>

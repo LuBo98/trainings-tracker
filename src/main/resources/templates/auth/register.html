@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrieren - Training Tracker</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <h2>Neues Konto erstellen</h2>
+
+            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+            <form th:action="@{/auth/register}" method="post">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" class="form-control" required minlength="3" maxlength="50" autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="email">E-Mail-Adresse</label>
+                    <input type="email" id="email" name="email" class="form-control" required>
+                    <small style="color:var(--gray-500);">Zum Wiederherstellen des Passworts</small>
+                </div>
+                <div class="form-group">
+                    <label for="password">Passwort</label>
+                    <input type="password" id="password" name="password" class="form-control" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Passwort bestaetigen</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;">Registrieren</button>
+            </form>
+
+            <div class="text-center mt-2">
+                <a th:href="@{/auth/login}" class="btn btn-outline btn-sm">Zurueck zur Anmeldung</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

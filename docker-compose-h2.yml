@@ -1,0 +1,24 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: training-tracker
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      # Uses H2 file-based database (persistent via volume)
+      DB_URL: jdbc:h2:file:/data/trainingdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+      DB_USERNAME: sa
+      DB_PASSWORD:
+      DB_DRIVER: org.h2.Driver
+      MAIL_ENABLED: "true"
+      BASE_URL: http://localhost:8080
+    volumes:
+      - training-data:/data
+    restart: unless-stopped
+
+volumes:
+  training-data:

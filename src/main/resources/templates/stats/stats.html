@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistik - Training Tracker</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <a class="navbar-brand" th:href="@{/dashboard}">Training Tracker</a>
+        <ul class="navbar-nav">
+            <li><a th:href="@{/dashboard}">Dashboard</a></li>
+            <li><a th:href="@{/categories}">Kategorien</a></li>
+            <li><a th:href="@{/workouts}">Workouts</a></li>
+            <li><a th:href="@{/stats}">Statistik</a></li>
+            <li><form th:action="@{/auth/logout}" method="post" style="display:inline;"><button type="submit" class="btn btn-outline btn-sm">Logout</button></form></li>
+        </ul>
+    </nav>
+    <div class="container">
+        <h1 class="mb-2">Statistik</h1>
+
+        <!-- Filter Form -->
+        <div class="card">
+            <div class="card-header">Zeitraum und Bereich waehlen</div>
+            <form th:action="@{/stats}" method="get" style="display:grid; grid-template-columns: 1fr 1fr 1fr auto; gap:1rem; align-items:end;">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label for="startDate">Von</label>
+                    <input type="date" id="startDate" name="startDate" class="form-control" required th:value="${startDateVal}">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label for="endDate">Bis</label>
+                    <input type="date" id="endDate" name="endDate" class="form-control" required th:value="${endDateVal}">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label for="scope">Bereich</label>
+                    <select id="scope" name="scope" class="form-control" onchange="toggleExerciseSelect()">
+                        <option value="all" th:selected="${scope == 'all'}">Alle Uebungen</option>
+                        <option value="category" th:selected="${scope == 'category'}">Pro Kategorie</option>
+                        <option value="exercise" th:selected="${scope == 'exercise'}">Pro Uebung</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Anzeigen</button>
+            </form>
+
+            <!-- Exercise selector (shown when scope=exercise) -->
+            <div id="exerciseSelectDiv" style="margin-top:1rem; display:none;">
+                <label for="exerciseId">Uebung waehlen</label>
+                <select id="exerciseId" name="exerciseId" class="form-control">
+                    <option value="">-- Uebung waehlen --</option>
+                    <optgroup th:each="cat : ${categories}" th:label="${cat.name}">
+                        <option th:each="ex : ${cat.exercises}"
+                                th:value="${ex.id}"
+                                th:text="${ex.name}"
+                                th:selected="${exerciseId != null && exerciseId == ex.id}">
+                        </option>
+                    </optgroup>
+                </select>
+                <button type="submit" class="btn btn-primary mt-1">Filtern</button>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div th:if="${stats != null and not stats.isEmpty()}" class="card mt-2">
+            <div class="card-header">Uebersicht</div>
+            <div class="dashboard-grid">
+                <div class="stat-card"><div class="stat-value" th:text="${stats.totalWorkouts}">0</div><div class="stat-label">Workout-Eintraege</div></div>
+                <div class="stat-card"><div class="stat-value" th:text="${stats.uniqueDays}">0</div><div class="stat-label">Trainings-Tage</div></div>
+                <div class="stat-card"><div class="stat-value" th:text="${stats.totalSets}">0</div><div class="stat-label">Gesamt-Sets</div></div>
+                <div class="stat-card"><div class="stat-value" th:text="${stats.totalReps}">0</div><div class="stat-label">Gesamt-Wdh.</div></div>
+                <div class="stat-card"><div class="stat-value" th:text="${stats.totalVolume}">0</div><div class="stat-label">Gesamt-Volumen (kg)</div></div>
+                <div class="stat-card"><div class="stat-value" th:text="${stats.avgWeight}">0</div><div class="stat-label">Durchschn. Gewicht</div></div>
+                <div class="stat-card"><div class="stat-value" th:text="${stats.avgDifficulty}">0</div><div class="stat-label">Durchschn. Anstrengung</div></div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div th:if="${stats != null and not stats.isEmpty()}" class="card mt-2">
+            <div class="card-header">Graphen</div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; padding:1rem;">
+                <div>
+                    <h3 style="margin-bottom:0.5rem;">Volumen pro Tag (kg)</h3>
+                    <canvas id="volumeChart" height="250"></canvas>
+                </div>
+                <div>
+                    <h3 style="margin-bottom:0.5rem;">Anstrengung pro Tag</h3>
+                    <canvas id="difficultyChart" height="250"></canvas>
+                </div>
+                <div>
+                    <h3 style="margin-bottom:0.5rem;">Gewichtsentwicklung</h3>
+                    <canvas id="weightChart" height="250"></canvas>
+                </div>
+                <div>
+                    <h3 style="margin-bottom:0.5rem;">Sets und Wiederholungen</h3>
+                    <canvas id="setsRepsChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category breakdown -->
+        <div th:if="${scope == 'category' and stats != null and not stats.isEmpty()}" class="card mt-2">
+            <div class="card-header">Aufteilung pro Kategorie</div>
+            <div style="padding:1rem;">
+                <canvas id="categoryBreakdownChart" height="300"></canvas>
+            </div>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger mt-2" th:text="${error}"></div>
+    </div>
+
+    <script th:inline="javascript">
+        // Toggle exercise selector
+        function toggleExerciseSelect() {
+            var scope = document.getElementById('scope').value;
+            document.getElementById('exerciseSelectDiv').style.display = (scope === 'exercise') ? 'block' : 'none';
+        }
+        // Initialize on load
+        toggleExerciseSelect();
+
+        // Chart data from server
+        var chartData = /*[[${chartData}]]*/ {};
+
+        // Chart color palette
+        var colors = ['#6366f1','#f59e0b','#10b981','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899'];
+
+        if (chartData && chartData.labels) {
+            // Volume per day chart
+            new Chart(document.getElementById('volumeChart'), {
+                type: 'bar',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [{
+                        label: 'Volumen (kg)',
+                        data: chartData.volumes || [],
+                        backgroundColor: colors[0] + '80',
+                        borderColor: colors[0],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+
+            // Difficulty per day chart
+            new Chart(document.getElementById('difficultyChart'), {
+                type: 'line',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [{
+                        label: 'Anstrengung',
+                        data: chartData.difficulties || [],
+                        borderColor: colors[3],
+                        backgroundColor: colors[3] + '30',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { min: 1, max: 5, ticks: {
+                        callback: function(v) { return ['','Einfach','Moderat','Anstrengend','Sehr anstrengend','Nicht geschafft'][v] || ''; }
+                    }}}
+                }
+            });
+
+            // Weight development chart
+            new Chart(document.getElementById('weightChart'), {
+                type: 'line',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [{
+                        label: 'Gewicht (kg)',
+                        data: chartData.weights || [],
+                        borderColor: colors[2],
+                        backgroundColor: colors[2] + '30',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+
+            // Sets and Reps chart
+            new Chart(document.getElementById('setsRepsChart'), {
+                type: 'bar',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [
+                        { label: 'Sets', data: chartData.sets || [], backgroundColor: colors[4] + '80', borderColor: colors[4], borderWidth: 1 },
+                        { label: 'Wdh.', data: chartData.reps || [], backgroundColor: colors[5] + '80', borderColor: colors[5], borderWidth: 1 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+
+            // Category breakdown (doughnut)
+            if (chartData.categoryBreakdown) {
+                new Chart(document.getElementById('categoryBreakdownChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: chartData.categoryBreakdown.labels,
+                        datasets: [{
+                            data: chartData.categoryBreakdown.data,
+                            backgroundColor: colors.slice(0, chartData.categoryBreakdown.labels.length)
+                        }]
+                    },
+                    options: { responsive: true }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
