@@ -113,3 +113,4 @@ mvn spring-boot:run -Dspring-boot.run.arguments="\
 3. **Uebung hinzufuegen**: In jeder Kategorie Uebungen definieren (z.B. "Bankdruecken")
 4. **Workout eintragen**: Sets, Wiederholungen und Gewicht eingeben
 5. **Statistik ansehen**: Uebersicht ueber Trainingsfortschritt
+# Training Tracker
