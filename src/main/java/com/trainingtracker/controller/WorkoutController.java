@@ -123,6 +123,16 @@ public class WorkoutController {
         return "redirect:/workouts";
     }
 
+    // BULK WORKOUT: Landing page - choose a category
+    @GetMapping("/bulk-landing")
+    public String showBulkLanding(@AuthenticationPrincipal UserDetails userDetails,
+                                  Model model) {
+        Long userId = getCurrentUserId(userDetails);
+        List<Category> categories = categoryRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        model.addAttribute("categories", categories);
+        return "workouts/bulk-landing";
+    }
+
     // BULK WORKOUT: Show bulk form for a category
     @GetMapping("/bulk")
     public String showBulkForm(@RequestParam Long categoryId,

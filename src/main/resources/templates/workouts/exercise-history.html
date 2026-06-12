@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,19 +7,9 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <nav class="navbar">
-        <a class="navbar-brand" th:href="@{/dashboard}">Training Tracker</a>
-        <ul class="navbar-nav">
-            <li><a th:href="@{/dashboard}">Dashboard</a></li>
-            <li><a th:href="@{/categories}">Kategorien</a></li>
-            <li><a th:href="@{/workouts}">Workouts</a></li>
-            <li><a th:href="@{/stats}">Statistik</a></li>
-            <li><form th:action="@{/auth/logout}" method="post" style="display:inline;"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/><button type="submit" class="btn btn-outline btn-sm">Logout</button></form></li>
-        </ul>
-    </nav>
+    <nav th:replace="~{fragments/navbar :: navbar}"></nav>
     <div class="container">
-        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
-        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        <div th:replace="~{fragments/navbar :: alerts}"></div>
         <div class="d-flex justify-between align-center mb-2">
             <div>
                 <a th:href="@{/workouts}" style="color:var(--gray-500); text-decoration:none;">Workouts</a>
@@ -48,7 +38,7 @@
                                   th:text="${entry.difficulty == 1} ? 'Einfach' : (${entry.difficulty == 2} ? 'Moderat' : (${entry.difficulty == 3} ? 'Anstrengend' : (${entry.difficulty == 4} ? 'Sehr anstrengend' : 'Nicht geschafft')))">
                             </span>
                         </td>
-                        <td th:text="${entry.notes != null} ? ${entry.notes} : '-'"></td>
+                        <td th:text="${entry.notes != null} ? ${entry.notes} : '-'\"></td>
                         <td>
                             <form th:action="@{'/workouts/delete/' + ${entry.id}}" method="post" style="display:inline;" onsubmit="return confirm('Eintrag wirklich loeschen?');">
                                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>

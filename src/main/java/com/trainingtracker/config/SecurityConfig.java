@@ -70,7 +70,7 @@ public class SecurityConfig {
                     .includeSubDomains(true)
                     .maxAgeInSeconds(31536000)
                 )
-                .contentTypeOptions(ct -> ct)
+                .contentTypeOptions()
             );
 
         return http.build();

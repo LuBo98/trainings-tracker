@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Workout - Training Tracker</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav th:replace="~{fragments/navbar :: navbar}"></nav>
+    <div class="container">
+        <h1 class="mb-2">Bulk Workout</h1>
+        <p style="color:var(--gray-500); margin-bottom:1.5rem;">Waehle eine Kategorie, um mehrere Workouts auf einmal einzutragen:</p>
+
+        <div th:if="${categories.isEmpty()}" class="card text-center">
+            <p>Keine Kategorien vorhanden. Erstelle zuerst eine Kategorie!</p>
+            <a th:href="@{/categories}" class="btn btn-primary mt-1">Zu den Kategorien</a>
+        </div>
+
+        <div th:each="category : ${categories}" class="card" style="margin-bottom:1rem;">
+            <div class="d-flex justify-between align-center">
+                <div>
+                    <h3 th:text="${category.name}"></h3>
+                    <p th:if="${category.description}" th:text="${category.description}" style="color:var(--gray-500);"></p>
+                    <small style="color:var(--gray-500);"><span th:text="${#lists.size(category.exercises)}"></span> Uebungen</small>
+                </div>
+                <a th:href="@{'/workouts/bulk?categoryId=' + ${category.id}}" class="btn btn-success">Workout eintragen</a>
+            </div>
+        </div>
+
+        <a th:href="@{/workouts}" class="btn btn-outline mt-2">Zurueck zu Workouts</a>
+    </div>
+</body>
+</html>
