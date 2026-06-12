@@ -14,7 +14,7 @@
             <li><a th:href="@{/categories}">Kategorien</a></li>
             <li><a th:href="@{/workouts}">Workouts</a></li>
             <li><a th:href="@{/stats}">Statistik</a></li>
-            <li><form th:action="@{/auth/logout}" method="post" style="display:inline;"><button type="submit" class="btn btn-outline btn-sm">Logout</button></form></li>
+            <li><form th:action="@{/auth/logout}" method="post" style="display:inline;"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/><button type="submit" class="btn btn-outline btn-sm">Logout</button></form></li>
         </ul>
     </nav>
     <div class="container">
@@ -47,6 +47,7 @@
                         </td>
                         <td>
                             <form th:action="@{'/workouts/delete/' + ${entry.id}}" method="post" style="display:inline;" onsubmit="return confirm('Eintrag wirklich loeschen?');">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                 <button type="submit" class="btn btn-danger btn-sm">Loeschen</button>
                             </form>
                         </td>

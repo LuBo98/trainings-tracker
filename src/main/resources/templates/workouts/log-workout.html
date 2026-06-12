@@ -14,13 +14,14 @@
             <li><a th:href="@{/categories}">Kategorien</a></li>
             <li><a th:href="@{/workouts}">Workouts</a></li>
             <li><a th:href="@{/stats}">Statistik</a></li>
-            <li><form th:action="@{/auth/logout}" method="post" style="display:inline;"><button type="submit" class="btn btn-outline btn-sm">Logout</button></form></li>
+            <li><form th:action="@{/auth/logout}" method="post" style="display:inline;"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/><button type="submit" class="btn btn-outline btn-sm">Logout</button></form></li>
         </ul>
     </nav>
     <div class="container">
         <h1 class="mb-2">Workout eintragen: <span th:text="${exercise.name}"></span></h1>
         <div class="card">
             <form th:action="@{/workouts/log}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <input type="hidden" name="exerciseId" th:value="${exercise.id}">
                 <div class="form-group">
                     <label for="workoutDate">Datum</label>

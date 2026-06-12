@@ -36,7 +36,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
+            // CSRF-Schutz aktivieren (Thymeleaf liefert _csrf-Token automatisch)
+            .csrf(csrf -> csrf
+                .ignoringRequestMatchers("/h2-console/**")
+            )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/auth/login",
@@ -63,6 +66,11 @@ public class SecurityConfig {
             )
             .headers(headers -> headers
                 .frameOptions(frame -> frame.sameOrigin())
+                .httpStrictTransportSecurity(hsts -> hsts
+                    .includeSubDomains(true)
+                    .maxAgeInSeconds(31536000)
+                )
+                .contentTypeOptions(ct -> ct)
             );
 
         return http.build();

@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -50,6 +51,35 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    /**
+     * Passwort-Validierung: mindestens 8 Zeichen, Gross-/Kleinbuchstaben + Zahl oder Sonderzeichen.
+     */
+    public static boolean isValidPassword(String password) {
+        if (password == null || password.length() < 8) {
+            return false;
+        }
+        boolean hasUpper = password.matches(".*[A-Z].*");
+        boolean hasLower = password.matches(".*[a-z].*");
+        boolean hasDigitOrSpecial = password.matches(".*[0-9!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*");
+        return (hasUpper && hasLower) && hasDigitOrSpecial;
+    }
+
+    public String validatePassword(String password) {
+        if (password == null || password.length() < 8) {
+            return "Password must be at least 8 characters";
+        }
+        boolean hasUpper = password.matches(".*[A-Z].*");
+        boolean hasLower = password.matches(".*[a-z].*");
+        boolean hasDigitOrSpecial = password.matches(".*[0-9!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*");
+        if (!hasUpper || !hasLower) {
+            return "Password must contain both uppercase and lowercase letters";
+        }
+        if (!hasDigitOrSpecial) {
+            return "Password must contain at least one digit or special character";
+        }
+        return null; // valid
+    }
+
     public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
     }
@@ -60,42 +90,59 @@ public class UserService {
 
     @Transactional
     public void requestPasswordReset(String email, RedirectAttributes redirectAttributes) {
-        User user = userRepository.findByEmail(email.toLowerCase())
-                .orElseThrow(() -> new RuntimeException("No account found with that email"));
+        // Always show generic message to prevent email enumeration
+        User user = userRepository.findByEmail(email.toLowerCase()).orElse(null);
 
-        String token = UUID.randomUUID().toString();
-        user.setResetToken(token);
-        user.setResetTokenExpiry(LocalDateTime.now().plusHours(24));
-        userRepository.save(user);
+        if (user != null) {
+            String token = UUID.randomUUID().toString();
+            // Hash token before storing - prevents token leakage from DB access
+            String hashedToken = passwordEncoder.encode(token);
+            user.setResetToken(hashedToken);
+            user.setResetTokenExpiry(LocalDateTime.now().plusHours(24));
+            userRepository.save(user);
 
-        if (mailEnabled) {
-            sendResetEmail(user, token);
-            redirectAttributes.addFlashAttribute("info",
-                    "Password reset link sent to " + user.getEmail());
+            if (mailEnabled) {
+                sendResetEmail(user, token);
+                redirectAttributes.addFlashAttribute("info",
+                        "If an account with that email exists, a reset link has been sent.");
+            } else {
+                // Fallback: store plaintext token for display when mail not configured
+                // (stored separately, not in DB)
+                redirectAttributes.addFlashAttribute("resetToken", token);
+                redirectAttributes.addFlashAttribute("resetEmail", user.getEmail());
+                redirectAttributes.addFlashAttribute("info",
+                        "Mail not configured. Use this token directly (valid for 24 hours):");
+            }
         } else {
-            // Fallback: store token info for display when mail not configured
-            redirectAttributes.addFlashAttribute("resetToken", token);
-            redirectAttributes.addFlashAttribute("resetEmail", user.getEmail());
+            // Same message whether email exists or not - prevents enumeration
             redirectAttributes.addFlashAttribute("info",
-                    "Mail not configured. Use this token directly (valid for 24 hours):");
+                    "If an account with that email exists, a reset link has been sent.");
         }
     }
 
     @Transactional
     public boolean resetPassword(String token, String newPassword) {
-        Optional<User> userOpt = userRepository.findByResetToken(token);
-        if (userOpt.isEmpty()) return false;
+        // Find all users with non-expired reset tokens and check if the provided
+        // token matches the stored BCrypt hash
+        List<User> candidates = userRepository
+                .findByResetTokenNotNullAndResetTokenExpiryAfter(LocalDateTime.now());
 
-        User user = userOpt.get();
-        if (user.getResetTokenExpiry() == null ||
-            user.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
+        User target = null;
+        for (User candidate : candidates) {
+            if (passwordEncoder.matches(token, candidate.getResetToken())) {
+                target = candidate;
+                break;
+            }
+        }
+
+        if (target == null) {
             return false;
         }
 
-        user.setPassword(passwordEncoder.encode(newPassword));
-        user.setResetToken(null);
-        user.setResetTokenExpiry(null);
-        userRepository.save(user);
+        target.setPassword(passwordEncoder.encode(newPassword));
+        target.setResetToken(null);
+        target.setResetTokenExpiry(null);
+        userRepository.save(target);
         return true;
     }
 

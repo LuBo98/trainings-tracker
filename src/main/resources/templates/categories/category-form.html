@@ -14,13 +14,14 @@
             <li><a th:href="@{/categories}">Kategorien</a></li>
             <li><a th:href="@{/workouts}">Workouts</a></li>
             <li><a th:href="@{/stats}">Statistik</a></li>
-            <li><form th:action="@{/auth/logout}" method="post" style="display:inline;"><button type="submit" class="btn btn-outline btn-sm">Logout</button></form></li>
+            <li><form th:action="@{/auth/logout}" method="post" style="display:inline;"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/><button type="submit" class="btn btn-outline btn-sm">Logout</button></form></li>
         </ul>
     </nav>
     <div class="container">
         <h1 class="mb-2" th:text="${category.id != null} ? 'Kategorie bearbeiten' : 'Neue Kategorie'"></h1>
         <div class="card">
             <form th:action="${category.id != null} ? @{'/categories/update/' + ${category.id}} : @{/categories}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <div class="form-group">
                     <label for="name">Name</label>
                     <input type="text" id="name" name="name" class="form-control" required maxlength="100" autofocus th:value="${category.id != null} ? ${category.name} : ''">

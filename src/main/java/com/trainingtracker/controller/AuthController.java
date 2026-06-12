@@ -53,8 +53,9 @@ public class AuthController {
                 redirectAttributes.addFlashAttribute("error", "Passwords do not match");
                 return "redirect:/auth/register";
             }
-            if (password.length() < 6) {
-                redirectAttributes.addFlashAttribute("error", "Password must be at least 6 characters");
+            String passwordError = userService.validatePassword(password);
+            if (passwordError != null) {
+                redirectAttributes.addFlashAttribute("error", passwordError);
                 return "redirect:/auth/register";
             }
             userService.register(username, email, password);
@@ -113,8 +114,9 @@ public class AuthController {
             redirectAttributes.addFlashAttribute("error", "Passwords do not match");
             return "redirect:/auth/reset-password/" + token;
         }
-        if (password.length() < 6) {
-            redirectAttributes.addFlashAttribute("error", "Password must be at least 6 characters");
+        String passwordError = userService.validatePassword(password);
+        if (passwordError != null) {
+            redirectAttributes.addFlashAttribute("error", passwordError);
             return "redirect:/auth/reset-password/" + token;
         }
 
