@@ -37,18 +37,23 @@
 
             <!-- Exercise selector (shown when scope=exercise) -->
             <div id="exerciseSelectDiv" style="margin-top:1rem; display:none;">
-                <label for="exerciseId">Uebung waehlen</label>
-                <select id="exerciseId" name="exerciseId" class="form-control">
-                    <option value="">-- Uebung waehlen --</option>
-                    <optgroup th:each="cat : ${categories}" th:label="${cat.name}">
-                        <option th:each="ex : ${cat.exercises}"
-                                th:value="${ex.id}"
-                                th:text="${ex.name}"
-                                th:selected="${exerciseId != null && exerciseId == ex.id}">
-                        </option>
-                    </optgroup>
-                </select>
-                <button type="submit" class="btn btn-primary mt-1">Filtern</button>
+                <form th:action="@{/stats}" method="get">
+                    <input type="hidden" name="scope" value="exercise">
+                    <input type="hidden" name="startDate" th:value="${startDateVal}">
+                    <input type="hidden" name="endDate" th:value="${endDateVal}">
+                    <label for="exerciseId">Uebung waehlen</label>
+                    <select id="exerciseId" name="exerciseId" class="form-control">
+                        <option value="">-- Uebung waehlen --</option>
+                        <optgroup th:each="cat : ${categories}" th:label="${cat.name}">
+                            <option th:each="ex : ${cat.exercises}"
+                                    th:value="${ex.id}"
+                                    th:text="${ex.name}"
+                                    th:selected="${exerciseId != null && exerciseId == ex.id}">
+                            </option>
+                        </optgroup>
+                    </select>
+                    <button type="submit" class="btn btn-primary mt-1">Filtern</button>
+                </form>
             </div>
         </div>
 
