@@ -157,39 +157,82 @@
                 }
             });
 
-            // Weight development chart
+            // Weight development chart - filter out zero weights (bodyweight exercises)
+            var weightData = (chartData.weights || []).map(function(w, i) {
+                return w > 0 ? w : null;
+            });
+            var filteredWeights = weightData.filter(function(w){return w!==null;});
+            var suggestedMin = filteredWeights.length > 0 ? Math.min.apply(null, filteredWeights) * 0.9 : 0;
             new Chart(document.getElementById('weightChart'), {
                 type: 'line',
                 data: {
                     labels: chartData.labels,
                     datasets: [{
                         label: 'Gewicht (kg)',
-                        data: chartData.weights || [],
+                        data: weightData,
                         borderColor: colors[2],
                         backgroundColor: colors[2] + '30',
-                        fill: true,
-                        tension: 0.3
+                        fill: false,
+                        tension: 0.3,
+                        spanGaps: false,
+                        pointRadius: function(context) {
+                            return context.raw !== null ? 4 : 0;
+                        }
                     }]
                 },
                 options: {
                     responsive: true,
-                    scales: { y: { beginAtZero: true } }
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            suggestedMin: suggestedMin
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            filter: function(item) { return item.raw !== null; }
+                        }
+                    }
                 }
             });
 
-            // Sets and Reps chart
+            // Sets and Reps chart - normalized for visibility
             new Chart(document.getElementById('setsRepsChart'), {
                 type: 'bar',
                 data: {
                     labels: chartData.labels,
                     datasets: [
-                        { label: 'Sets', data: chartData.sets || [], backgroundColor: colors[4] + '80', borderColor: colors[4], borderWidth: 1 },
-                        { label: 'Wdh.', data: chartData.reps || [], backgroundColor: colors[5] + '80', borderColor: colors[5], borderWidth: 1 }
+                        {
+                            label: 'Sets',
+                            data: (chartData.sets || []).map(function(s) { return s * 5; }),
+                            backgroundColor: colors[4] + '80',
+                            borderColor: colors[4],
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Wdh.',
+                            data: chartData.reps || [],
+                            backgroundColor: colors[5] + '80',
+                            borderColor: colors[5],
+                            borderWidth: 1
+                        }
                     ]
                 },
                 options: {
                     responsive: true,
-                    scales: { y: { beginAtZero: true } }
+                    scales: { y: { beginAtZero: true } },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.dataset.label === 'Sets') {
+                                        return 'Sets: ' + (context.raw / 5);
+                                    }
+                                    return context.dataset.label + ': ' + context.raw;
+                                }
+                            }
+                        }
+                    }
                 }
             });
 
