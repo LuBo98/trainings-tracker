@@ -24,10 +24,9 @@ jobs:
 
       - name: Upload code to server
         run: |
-          rsync -avz --delete \
-            -e "ssh -o StrictHostKeyChecking=no" \
-            src/ pom.xml Dockerfile \
-            root@195.20.225.70:/opt/training-tracker/
+          tar czf /tmp/deploy.tar.gz src/ pom.xml Dockerfile
+          scp -o StrictHostKeyChecking=no /tmp/deploy.tar.gz root@195.20.225.70:/tmp/deploy.tar.gz
+          ssh -o StrictHostKeyChecking=no root@195.20.225.70 "cd /opt/training-tracker && tar xzf /tmp/deploy.tar.gz && rm /tmp/deploy.tar.gz"
 
       - name: Build and deploy
         run: |
