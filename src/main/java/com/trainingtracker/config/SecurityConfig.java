@@ -65,7 +65,7 @@ public class SecurityConfig {
                 .rememberMeParameter("remember-me")
             )
             .logout(logout -> logout
-                .logoutUrl("/auth/logout")
+                .logoutRequestMatcher(new AntPathRequestMatcher("/auth/logout", "POST"))
                 .logoutSuccessUrl("/auth/login?logout=true")
                 .invalidateHttpSession(true)
                 .deleteCookies("JSESSIONID", "remember-me")

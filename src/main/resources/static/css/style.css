@@ -561,6 +561,24 @@ a:hover { text-decoration: underline; }
     .stats-filter-form {
         grid-template-columns: 1fr !important;
     }
+
+    /* Mobile form improvements */
+    .form-control {
+        font-size: 16px !important;
+        padding: 0.75rem;
+    }
+    input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+    }
+    .difficulty-badge {
+        font-size: 0.85rem;
+        padding: 0.25rem 0.75rem;
+    }
+    .stat-label {
+        font-size: 0.875rem;
+    }
 }
 
 /* Very small screens */

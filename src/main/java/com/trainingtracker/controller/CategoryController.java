@@ -106,10 +106,10 @@ public class CategoryController {
     }
 
     // Delete category
-    @PostMapping("/delete/{id}")
-    public String deleteCategory(@PathVariable Long id,
-                                 @AuthenticationPrincipal UserDetails userDetails,
-                                 RedirectAttributes redirectAttributes) {
+    @DeleteMapping("/delete/{id}")
+    public String deleteCategoryDelete(@PathVariable Long id,
+                                       @AuthenticationPrincipal UserDetails userDetails,
+                                       RedirectAttributes redirectAttributes) {
         try {
             Long userId = getCurrentUserId(userDetails);
             categoryService.delete(id, userId);
@@ -118,5 +118,13 @@ public class CategoryController {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/categories";
+    }
+
+    // Delete category (POST fallback for form-based deletion)
+    @PostMapping("/delete/{id}")
+    public String deleteCategoryPost(@PathVariable Long id,
+                                     @AuthenticationPrincipal UserDetails userDetails,
+                                     RedirectAttributes redirectAttributes) {
+        return deleteCategoryDelete(id, userDetails, redirectAttributes);
     }
 }

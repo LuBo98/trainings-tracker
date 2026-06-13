@@ -204,10 +204,27 @@ public class WorkoutController {
 
     // Delete entire workout (all entries of one day in one category)
     @GetMapping("/delete")
-    public String deleteWorkout(@RequestParam Long categoryId,
-                                @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
-                                @AuthenticationPrincipal UserDetails userDetails,
-                                RedirectAttributes redirectAttributes) {
+    public String deleteWorkoutGet(@RequestParam Long categoryId,
+                                   @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
+                                   @AuthenticationPrincipal UserDetails userDetails,
+                                   RedirectAttributes redirectAttributes) {
+        return deleteWorkout(categoryId, date, userDetails, redirectAttributes);
+    }
+
+    // Delete entire workout (POST for form-based deletion)
+    @PostMapping("/delete")
+    public String deleteWorkoutPost(@RequestParam Long categoryId,
+                                    @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
+                                    @AuthenticationPrincipal UserDetails userDetails,
+                                    RedirectAttributes redirectAttributes) {
+        return deleteWorkout(categoryId, date, userDetails, redirectAttributes);
+    }
+
+    // Shared delete logic
+    private String deleteWorkout(Long categoryId,
+                                 LocalDate date,
+                                 @AuthenticationPrincipal UserDetails userDetails,
+                                 RedirectAttributes redirectAttributes) {
         try {
             Long userId = getCurrentUserId(userDetails);
             workoutService.deleteWorkout(categoryId, date, userId);

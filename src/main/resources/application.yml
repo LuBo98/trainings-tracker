@@ -51,5 +51,5 @@ app:
 
 logging:
   level:
-    com.trainingtracker: INFO
-    org.springframework.security: WARN
+    com.trainingtracker: DEBUG
+    org.springframework.security: DEBUG

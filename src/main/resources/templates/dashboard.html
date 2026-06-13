@@ -21,6 +21,10 @@
                 text-align: center;
             }
         }
+        .stat-card a {
+            display: block;
+            height: 100%;
+        }
     </style>
 </head>
 <body>
@@ -33,21 +37,27 @@
 
         <div class="dashboard-grid">
             <div class="stat-card">
-                <a th:href="@{/categories}" style="text-decoration:none; color:inherit;">
-                    <div class="stat-value">K</div>
-                    <div class="stat-label">Kategorien verwalten</div>
-                </a>
-            </div>
-            <div class="stat-card">
                 <a th:href="@{/workouts/bulk-landing}" style="text-decoration:none; color:inherit;">
                     <div class="stat-value">W</div>
-                    <div class="stat-label">Workouts eintragen</div>
+                    <div class="stat-label">Workout eintragen</div>
                 </a>
             </div>
             <div class="stat-card">
                 <a th:href="@{/stats}" style="text-decoration:none; color:inherit;">
                     <div class="stat-value">S</div>
-                    <div class="stat-label">Statistik ansehen</div>
+                    <div class="stat-label">Statistik</div>
+                </a>
+            </div>
+            <div class="stat-card">
+                <a th:href="@{/categories}" style="text-decoration:none; color:inherit;">
+                    <div class="stat-value">K</div>
+                    <div class="stat-label">Kategorien</div>
+                </a>
+            </div>
+            <div class="stat-card">
+                <a th:href="@{/workouts}" style="text-decoration:none; color:inherit;">
+                    <div class="stat-value">V</div>
+                    <div class="stat-label">Verlauf</div>
                 </a>
             </div>
         </div>
@@ -55,8 +65,10 @@
         <div class="card">
             <div class="card-header">Schnellzugriff</div>
             <div class="quick-access-grid">
-                <a th:href="@{/categories/new}" class="btn btn-primary">Neue Kategorie anlegen</a>
-                <a th:href="@{/stats}" class="btn btn-outline">Statistik ansehen</a>
+                <a th:href="@{/workouts/bulk-landing}" class="btn btn-primary">Workout eintragen</a>
+                <a th:href="@{/categories/new}" class="btn btn-primary">Neue Kategorie</a>
+                <a th:href="@{/stats}" class="btn btn-outline">Statistik</a>
+                <a th:href="@{/workouts}" class="btn btn-outline">Verlauf</a>
             </div>
         </div>
 

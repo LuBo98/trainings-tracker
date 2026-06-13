@@ -87,10 +87,10 @@
                         <div class="workout-actions">
                             <a th:href="@{'/workouts/edit'(categoryId=${catEntry.key.id}, date=${#temporals.format(dateEntry.key, 'yyyy-MM-dd')})}"
                                class="btn btn-outline btn-sm" title="Workout bearbeiten">✎</a>
-                            <a th:href="@{'/workouts/delete'(categoryId=${catEntry.key.id}, date=${#temporals.format(dateEntry.key, 'yyyy-MM-dd')})}"
-                               class="btn btn-danger btn-sm"
-                               onclick="return confirm('Ganzes Workout fuer diesen Tag wirklich loeschen?');"
-                               title="Workout loeschen">✕</a>
+                            <form th:action="@{'/workouts/delete'(categoryId=${catEntry.key.id}, date=${#temporals.format(dateEntry.key, 'yyyy-MM-dd')})}" method="post" style="display:inline;">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Ganzes Workout fuer diesen Tag wirklich loeschen?');" title="Workout loeschen">✕</button>
+                            </form>
                         </div>
                     </div>
                     <!-- Exercise entries for this workout -->
