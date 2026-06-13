@@ -1,11 +1,16 @@
 package com.trainingtracker.entity;
 
 import jakarta.persistence.*;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "workout_entries")
+@Table(name = "workout_entries", indexes = {
+    @Index(name = "idx_workout_date", columnList = "workout_date"),
+    @Index(name = "idx_workout_exercise_date", columnList = "exercise_id, workout_date"),
+    @Index(name = "idx_workout_exercise_category_user", columnList = "exercise_id, workout_date DESC")
+})
 public class WorkoutEntry {
 
     @Id
