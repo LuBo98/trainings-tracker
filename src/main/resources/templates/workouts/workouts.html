@@ -85,12 +85,12 @@
                     <div class="workout-header">
                         <span class="workout-date" th:text="${#temporals.format(dateEntry.key, 'dd.MM.yyyy')}"></span>
                         <div class="workout-actions">
-                            <a th:href="@{'/workouts/edit?(categoryId=' + ${catEntry.key.id} + ',date=' + ${dateEntry.key} + ')'}"
+                            <a th:href="@{'/workouts/edit'(categoryId=${catEntry.key.id}, date=${#temporals.format(dateEntry.key, 'yyyy-MM-dd')})}"
                                class="btn btn-outline btn-sm" title="Workout bearbeiten">✎</a>
-                            <a th:href="@{'/workouts/delete?(categoryId=' + ${catEntry.key.id} + ',date=' + ${dateEntry.key} + ')'}"
-                                   class="btn btn-danger btn-sm"
-                                   onclick="return confirm('Ganzes Workout fuer diesen Tag wirklich loeschen?');"
-                                   title="Workout loeschen">✕</a>
+                            <a th:href="@{'/workouts/delete'(categoryId=${catEntry.key.id}, date=${#temporals.format(dateEntry.key, 'yyyy-MM-dd')})}"
+                               class="btn btn-danger btn-sm"
+                               onclick="return confirm('Ganzes Workout fuer diesen Tag wirklich loeschen?');"
+                               title="Workout loeschen">✕</a>
                         </div>
                     </div>
                     <!-- Exercise entries for this workout -->

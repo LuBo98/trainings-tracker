@@ -132,9 +132,17 @@ public class WorkoutController {
         }
         List<com.trainingtracker.entity.WorkoutEntry> entries = 
                 workoutService.getWorkoutEntries(categoryId, date, userId);
+        
+        // Create a map of exercise ID to entry for easy lookup
+        Map<Long, com.trainingtracker.entity.WorkoutEntry> entryMap = new HashMap<>();
+        for (com.trainingtracker.entity.WorkoutEntry e : entries) {
+            entryMap.put(e.getExercise().getId(), e);
+        }
+        
         model.addAttribute("category", category);
         model.addAttribute("workoutDate", date);
         model.addAttribute("entries", entries);
+        model.addAttribute("entryMap", entryMap);
         model.addAttribute("exercises", category.getExercises());
         return "workouts/edit-workout";
     }
