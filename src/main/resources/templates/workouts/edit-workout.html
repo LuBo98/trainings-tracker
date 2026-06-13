@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Workout - Training Tracker</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script th:src="@{/js/nav.js}" defer></script>
+</head>
+<body>
+    <nav th:replace="~{fragments/navbar :: navbar}"></nav>
+    <div class="container">
+        <div class="d-flex justify-between align-center mb-2">
+            <h1>Workout bearbeiten</h1>
+            <a th:href="@{/workouts}" class="btn btn-outline">Abbrechen</a>
+        </div>
+
+        <form th:action="@{'/workouts/edit/' + ${entry.id}}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <div class="card">
+                <div class="card-header">
+                    <span th:text="${entry.exercise.name}"></span>
+                </div>
+                <div style="padding:1rem;">
+                    <div class="form-group">
+                        <label for="workoutDate">Datum</label>
+                        <input type="date" id="workoutDate" name="workoutDate" class="form-control" 
+                               required th:value="${#temporals.format(entry.workoutDate, 'yyyy-MM-dd')}">
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1rem;">
+                        <div class="form-group">
+                            <label for="sets">Sets</label>
+                            <input type="number" id="sets" name="sets" class="form-control" 
+                                   min="1" required th:value="${entry.sets}">
+                        </div>
+                        <div class="form-group">
+                            <label for="reps">Wiederholungen</label>
+                            <input type="number" id="reps" name="reps" class="form-control" 
+                                   min="1" required th:value="${entry.reps}">
+                        </div>
+                        <div class="form-group">
+                            <label for="weight">Gewicht (kg)</label>
+                            <input type="number" id="weight" name="weight" class="form-control" 
+                                   min="0" step="0.5" required th:value="${entry.weight}">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Anstrengung</label>
+                        <div class="difficulty-scale">
+                            <label class="difficulty-option">
+                                <input type="radio" name="difficulty" value="1" 
+                                       th:checked="${entry.difficulty == 1}" style="display:none;">
+                                <span class="difficulty-label">Einfach</span>
+                            </label>
+                            <label class="difficulty-option">
+                                <input type="radio" name="difficulty" value="2" 
+                                       th:checked="${entry.difficulty == 2}" style="display:none;">
+                                <span class="difficulty-label">Moderat</span>
+                            </label>
+                            <label class="difficulty-option">
+                                <input type="radio" name="difficulty" value="3" 
+                                       th:checked="${entry.difficulty == 3}" style="display:none;">
+                                <span class="difficulty-label">Anstrengend</span>
+                            </label>
+                            <label class="difficulty-option">
+                                <input type="radio" name="difficulty" value="4" 
+                                       th:checked="${entry.difficulty == 4}" style="display:none;">
+                                <span class="difficulty-label">Sehr anstrengend</span>
+                            </label>
+                            <label class="difficulty-option">
+                                <input type="radio" name="difficulty" value="5" 
+                                       th:checked="${entry.difficulty == 5}" style="display:none;">
+                                <span class="difficulty-label">Nicht geschafft</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Notizen</label>
+                        <textarea id="notes" name="notes" class="form-control" 
+                                  rows="3" th:value="${entry.notes}"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-1 mt-2">
+                <button type="submit" class="btn btn-success">Speichern</button>
+                <a th:href="@{/workouts}" class="btn btn-outline">Abbrechen</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Difficulty scale click handler
+        document.querySelectorAll('.difficulty-scale').forEach(function(scale) {
+            scale.querySelectorAll('.difficulty-option').forEach(function(option) {
+                var radio = option.querySelector('input[type="radio"]');
+                var label = option.querySelector('.difficulty-label');
+                if (radio.checked) {
+                    label.style.borderColor = 'var(--primary)';
+                    label.style.background = 'var(--primary)';
+                    label.style.color = 'white';
+                }
+                option.addEventListener('click', function() {
+                    scale.querySelectorAll('.difficulty-label').forEach(function(l) {
+                        l.style.borderColor = 'var(--border)';
+                        l.style.background = 'white';
+                        l.style.color = 'var(--text)';
+                    });
+                    label.style.borderColor = 'var(--primary)';
+                    label.style.background = 'var(--primary)';
+                    label.style.color = 'white';
+                    radio.checked = true;
+                });
+            });
+        });
+    </script>
+</body>
+</html>

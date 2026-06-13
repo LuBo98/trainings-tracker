@@ -29,7 +29,7 @@
             color: var(--primary-color, #3b82f6);
         }
         .workout-entry-row {
-            display: grid; grid-template-columns: auto 1fr 1fr 1fr auto;
+            display: grid; grid-template-columns: auto 1fr 1fr 1fr auto auto;
             gap: 0.5rem; padding: 0.25rem 0;
             border-bottom: 1px solid var(--border-color, #333);
             font-size: 0.9rem;
@@ -45,6 +45,7 @@
         .difficulty-3 { background: #ea580c; color: white; }
         .difficulty-4 { background: #dc2626; color: white; }
         .difficulty-5 { background: #7c3aed; color: white; }
+        .action-btns { display: flex; gap: 0.25rem; }
 
         @media (max-width: 768px) {
             .workout-entry-row {
@@ -103,10 +104,12 @@
                                   th:classappend="'difficulty-' + ${w.difficulty}"
                                   th:text="${w.difficulty == 1 ? 'Einfach' : (w.difficulty == 2 ? 'Moderat' : (w.difficulty == 3 ? 'Anstrengend' : (w.difficulty == 4 ? 'Sehr anstrengend' : 'Nicht geschafft')))}"></span>
                         </span>
-                        <span>
+                        <span class="action-btns">
+                            <a th:href="@{'/workouts/edit/' + ${w.id}}"
+                               class="btn btn-outline btn-sm" title="Bearbeiten">✎</a>
                             <a th:href="@{'/workouts/delete/' + ${w.id}}"
                                class="btn btn-danger btn-sm"
-                               onclick="return confirm('Eintrag wirklich loeschen?');">✕</a>
+                               onclick="return confirm('Eintrag wirklich loeschen?');" title="Loeschen">✕</a>
                         </span>
                     </div>
                 </div>

@@ -10,12 +10,13 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import jakarta.servlet.http.HttpSession;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -95,6 +96,12 @@ public class WorkoutController {
         }
         model.addAttribute("exercise", exercise);
         model.addAttribute("todayDate", LocalDate.now().toString());
+        // Auto-fill with last values
+        workoutService.getLastEntryByExerciseId(exerciseId, userId).ifPresent(last -> {
+            model.addAttribute("lastSets", last.getSets());
+            model.addAttribute("lastReps", last.getReps());
+            model.addAttribute("lastWeight", last.getWeight());
+        });
         return "workouts/log-workout";
     }
 
@@ -113,6 +120,40 @@ public class WorkoutController {
             Long userId = getCurrentUserId(userDetails);
             workoutService.addEntry(exerciseId, workoutDate, sets, reps, weight, notes, difficulty, userId);
             redirectAttributes.addFlashAttribute("success", "Workout eingetragen!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Fehler: " + e.getMessage());
+        }
+        return "redirect:/workouts";
+    }
+
+    // EDIT workout entry - show form
+    @GetMapping("/edit/{id}")
+    public String showEditForm(@PathVariable Long id,
+                               @AuthenticationPrincipal UserDetails userDetails,
+                               Model model) {
+        Long userId = getCurrentUserId(userDetails);
+        com.trainingtracker.entity.WorkoutEntry entry = workoutService.findByExerciseId(
+                id, userId).stream().filter(e -> e.getId().equals(id)).findFirst()
+                .orElseThrow(() -> new RuntimeException("Workout entry not found"));
+        model.addAttribute("entry", entry);
+        return "workouts/edit-workout";
+    }
+
+    // Handle edit workout
+    @PostMapping("/edit/{id}")
+    public String editWorkout(@PathVariable Long id,
+                              @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate workoutDate,
+                              @RequestParam int sets,
+                              @RequestParam int reps,
+                              @RequestParam double weight,
+                              @RequestParam String notes,
+                              @RequestParam int difficulty,
+                              @AuthenticationPrincipal UserDetails userDetails,
+                              RedirectAttributes redirectAttributes) {
+        try {
+            Long userId = getCurrentUserId(userDetails);
+            workoutService.updateEntry(id, workoutDate, sets, reps, weight, notes, difficulty, userId);
+            redirectAttributes.addFlashAttribute("success", "Workout aktualisiert!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Fehler: " + e.getMessage());
         }
@@ -148,6 +189,7 @@ public class WorkoutController {
     @GetMapping("/bulk")
     public String showBulkForm(@RequestParam Long categoryId,
                                @AuthenticationPrincipal UserDetails userDetails,
+                               HttpSession session,
                                Model model) {
         Long userId = getCurrentUserId(userDetails);
         Category category = categoryRepository.findById(categoryId)
@@ -160,6 +202,18 @@ public class WorkoutController {
         model.addAttribute("category", category);
         model.addAttribute("exercises", category.getExercises());
         model.addAttribute("todayDate", LocalDate.now().toString());
+        
+        // Auto-fill with last values
+        Map<Long, com.trainingtracker.entity.WorkoutEntry> lastEntries = 
+                workoutService.getLastEntriesByCategory(categoryId, userId);
+        model.addAttribute("lastEntries", lastEntries);
+        
+        // Restore draft from session if exists
+        Map<String, Object> draft = (Map<String, Object>) session.getAttribute("bulkDraft_" + categoryId);
+        if (draft != null) {
+            model.addAttribute("draft", draft);
+        }
+        
         return "workouts/bulk-workout";
     }
 
@@ -169,6 +223,7 @@ public class WorkoutController {
                                  @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate workoutDate,
                                  @RequestParam Map<String, String> allParams,
                                  @AuthenticationPrincipal UserDetails userDetails,
+                                 HttpSession session,
                                  RedirectAttributes redirectAttributes) {
         try {
             Long userId = getCurrentUserId(userDetails);
@@ -202,10 +257,55 @@ public class WorkoutController {
                 }
             }
 
+            // Clear draft from session
+            session.removeAttribute("bulkDraft_" + categoryId);
+            
             redirectAttributes.addFlashAttribute("success", count + " Workout(s) fuer '" + category.getName() + "' eingetragen!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Fehler: " + e.getMessage());
         }
         return "redirect:/workouts";
+    }
+
+    // Save draft to session (AJAX call)
+    @PostMapping("/bulk/draft")
+    public String saveDraft(@RequestParam Long categoryId,
+                            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate workoutDate,
+                            @RequestParam Map<String, String> allParams,
+                            HttpSession session) {
+        Map<String, Object> draft = new HashMap<>();
+        draft.put("workoutDate", workoutDate.toString());
+        for (Map.Entry<String, String> entry : allParams.entrySet()) {
+            draft.put(entry.getKey(), entry.getValue());
+        }
+        session.setAttribute("bulkDraft_" + categoryId, draft);
+        return "redirect:/workouts/bulk?categoryId=" + categoryId;
+    }
+
+    // Add new exercise to category from bulk workout page
+    @PostMapping("/bulk/add-exercise")
+    public String addExerciseToCategory(@RequestParam Long categoryId,
+                                        @RequestParam String exerciseName,
+                                        @AuthenticationPrincipal UserDetails userDetails,
+                                        RedirectAttributes redirectAttributes) {
+        try {
+            Long userId = getCurrentUserId(userDetails);
+            Category category = categoryRepository.findById(categoryId)
+                    .orElseThrow(() -> new RuntimeException("Category not found"));
+            if (!category.getUser().getId().equals(userId)) {
+                throw new RuntimeException("Not authorized");
+            }
+            if (exerciseRepository.existsByNameAndCategoryId(exerciseName, categoryId)) {
+                throw new RuntimeException("Uebung existiert bereits in dieser Kategorie");
+            }
+            com.trainingtracker.entity.Exercise exercise = new com.trainingtracker.entity.Exercise();
+            exercise.setName(exerciseName);
+            exercise.setCategory(category);
+            exerciseRepository.save(exercise);
+            redirectAttributes.addFlashAttribute("success", "Uebung '" + exerciseName + "' hinzugefuegt!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Fehler: " + e.getMessage());
+        }
+        return "redirect:/workouts/bulk?categoryId=" + categoryId;
     }
 }

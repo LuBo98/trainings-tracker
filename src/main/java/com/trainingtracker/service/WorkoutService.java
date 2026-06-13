@@ -70,6 +70,25 @@ public class WorkoutService {
     }
 
     @Transactional
+    public WorkoutEntry updateEntry(Long id, LocalDate workoutDate,
+                                     int sets, int reps, double weight, String notes, int difficulty, Long userId) {
+        WorkoutEntry entry = workoutEntryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Workout entry not found"));
+
+        if (!entry.getExercise().getCategory().getUser().getId().equals(userId)) {
+            throw new RuntimeException("Not authorized to edit this entry");
+        }
+
+        entry.setWorkoutDate(workoutDate);
+        entry.setSets(sets);
+        entry.setReps(reps);
+        entry.setWeight(weight);
+        entry.setNotes(notes);
+        entry.setDifficulty(difficulty);
+        return workoutEntryRepository.save(entry);
+    }
+
+    @Transactional
     public void deleteEntry(Long id, Long userId) {
         WorkoutEntry entry = workoutEntryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Workout entry not found"));
@@ -79,6 +98,24 @@ public class WorkoutService {
         }
 
         workoutEntryRepository.delete(entry);
+    }
+
+    // Get last entry for an exercise (for auto-fill)
+    public Optional<WorkoutEntry> getLastEntryByExerciseId(Long exerciseId, Long userId) {
+        return workoutEntryRepository
+                .findByExerciseIdAndExerciseCategoryUserIdOrderByWorkoutDateDesc(exerciseId, userId)
+                .stream()
+                .findFirst();
+    }
+
+    // Get last entries for all exercises in a category (for bulk auto-fill)
+    public Map<Long, WorkoutEntry> getLastEntriesByCategory(Long categoryId, Long userId) {
+        List<Exercise> exercises = exerciseRepository.findByCategoryIdOrderByCreatedAtDesc(categoryId);
+        Map<Long, WorkoutEntry> result = new HashMap<>();
+        for (Exercise ex : exercises) {
+            getLastEntryByExerciseId(ex.getId(), userId).ifPresent(entry -> result.put(ex.getId(), entry));
+        }
+        return result;
     }
 
     // Statistics methods

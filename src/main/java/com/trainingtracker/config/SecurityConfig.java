@@ -42,11 +42,13 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
+                    "/",
                     "/auth/login",
                     "/auth/register",
                     "/auth/forgot-password",
                     "/auth/reset-password/**",
                     "/css/**",
+                    "/js/**",
                     "/h2-console/**"
                 ).permitAll()
                 .anyRequest().authenticated()

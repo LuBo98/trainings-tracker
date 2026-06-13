@@ -15,7 +15,7 @@
             <a th:href="@{/workouts}" class="btn btn-outline">Abbrechen</a>
         </div>
 
-        <form th:action="@{/workouts/bulk}" method="post">
+        <form th:action="@{/workouts/bulk}" method="post" id="bulkForm">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <input type="hidden" name="categoryId" th:value="${category.id}">
 
@@ -23,13 +23,17 @@
             <div class="card">
                 <div class="card-header">Datum</div>
                 <div style="padding:1rem;">
-                    <input type="date" name="workoutDate" class="form-control" required th:value="${todayDate}" style="max-width:250px;">
+                    <input type="date" name="workoutDate" class="form-control" required 
+                           th:value="${draft != null ? draft.workoutDate : todayDate}" style="max-width:250px;">
                 </div>
             </div>
 
             <!-- Exercise rows -->
             <div class="card mt-2">
-                <div class="card-header">Uebungen eintragen</div>
+                <div class="card-header d-flex justify-between align-center">
+                    <span>Uebungen eintragen</span>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="showAddExercise()">+ Neue Uebung</button>
+                </div>
                 <div style="padding:0;">
                     <div class="table-responsive">
                         <table class="table" style="margin-bottom:0;">
@@ -47,33 +51,41 @@
                                     <td><strong th:text="${exercise.name}"></strong></td>
                                     <td><input type="number" th:name="'sets_' + ${exercise.id}"
                                             class="form-control bulk-input" min="1" placeholder="0"
-                                            style="width:80px;" /></td>
+                                            style="width:80px;"
+                                            th:value="${draft != null ? draft['sets_' + exercise.id] : (lastEntries[exercise.id] != null ? lastEntries[exercise.id].sets : '')}"/></td>
                                     <td><input type="number" th:name="'reps_' + ${exercise.id}"
                                             class="form-control bulk-input" min="1" placeholder="0"
-                                            style="width:80px;" /></td>
+                                            style="width:80px;"
+                                            th:value="${draft != null ? draft['reps_' + exercise.id] : (lastEntries[exercise.id] != null ? lastEntries[exercise.id].reps : '')}"/></td>
                                     <td><input type="number" th:name="'weight_' + ${exercise.id}"
                                             class="form-control bulk-input" min="0" step="0.5" placeholder="0"
-                                            style="width:80px;" /></td>
+                                            style="width:80px;"
+                                            th:value="${draft != null ? draft['weight_' + exercise.id] : (lastEntries[exercise.id] != null ? lastEntries[exercise.id].weight : '')}"/></td>
                                     <td>
                                         <div class="difficulty-scale" style="padding:0.25rem; gap:0.25rem;">
                                             <label class="difficulty-radio" style="padding:0.25rem 0.5rem; font-size:0.8rem;">
-                                                <input type="radio" th:name="'diff_' + ${exercise.id}" th:value="1" style="display:none;">
+                                                <input type="radio" th:name="'diff_' + ${exercise.id}" th:value="1" style="display:none;"
+                                                       th:checked="${draft != null ? draft['diff_' + exercise.id] == '1' : (lastEntries[exercise.id] != null ? lastEntries[exercise.id].difficulty == 1 : false)}">
                                                 1
                                             </label>
                                             <label class="difficulty-radio" style="padding:0.25rem 0.5rem; font-size:0.8rem;">
-                                                <input type="radio" th:name="'diff_' + ${exercise.id}" th:value="2" checked style="display:none;">
+                                                <input type="radio" th:name="'diff_' + ${exercise.id}" th:value="2" style="display:none;"
+                                                       th:checked="${draft != null ? draft['diff_' + exercise.id] == '2' : (lastEntries[exercise.id] != null ? lastEntries[exercise.id].difficulty == 2 : false)}">
                                                 2
                                             </label>
                                             <label class="difficulty-radio" style="padding:0.25rem 0.5rem; font-size:0.8rem;">
-                                                <input type="radio" th:name="'diff_' + ${exercise.id}" th:value="3" style="display:none;">
+                                                <input type="radio" th:name="'diff_' + ${exercise.id}" th:value="3" checked style="display:none;"
+                                                       th:checked="${draft == null && (lastEntries[exercise.id] == null || lastEntries[exercise.id].difficulty == 3)}">
                                                 3
                                             </label>
                                             <label class="difficulty-radio" style="padding:0.25rem 0.5rem; font-size:0.8rem;">
-                                                <input type="radio" th:name="'diff_' + ${exercise.id}" th:value="4" style="display:none;">
+                                                <input type="radio" th:name="'diff_' + ${exercise.id}" th:value="4" style="display:none;"
+                                                       th:checked="${draft != null ? draft['diff_' + exercise.id] == '4' : (lastEntries[exercise.id] != null ? lastEntries[exercise.id].difficulty == 4 : false)}">
                                                 4
                                             </label>
                                             <label class="difficulty-radio" style="padding:0.25rem 0.5rem; font-size:0.8rem;">
-                                                <input type="radio" th:name="'diff_' + ${exercise.id}" th:value="5" style="display:none;">
+                                                <input type="radio" th:name="'diff_' + ${exercise.id}" th:value="5" style="display:none;"
+                                                       th:checked="${draft != null ? draft['diff_' + exercise.id] == '5' : (lastEntries[exercise.id] != null ? lastEntries[exercise.id].difficulty == 5 : false)}">
                                                 5
                                             </label>
                                         </div>
@@ -87,15 +99,39 @@
 
             <div class="d-flex gap-1 mt-2">
                 <button type="submit" class="btn btn-success">Alle Eintragen</button>
+                <button type="button" class="btn btn-outline" onclick="saveDraft()">Entwurf Speichern</button>
                 <a th:href="@{/workouts}" class="btn btn-outline">Abbrechen</a>
             </div>
         </form>
+    </div>
+
+    <!-- Add Exercise Modal -->
+    <div id="addExerciseModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+        <div style="background:white; padding:2rem; border-radius:0.5rem; max-width:400px; width:90%;">
+            <h3>Neue Uebung hinzufuegen</h3>
+            <form th:action="@{/workouts/bulk/add-exercise}" method="post" style="margin-top:1rem;">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" name="categoryId" th:value="${category.id}">
+                <div class="form-group">
+                    <label for="exerciseName">Uebungsname</label>
+                    <input type="text" id="exerciseName" name="exerciseName" class="form-control" required>
+                </div>
+                <div class="d-flex gap-1 mt-2">
+                    <button type="submit" class="btn btn-success">Hinzufuegen</button>
+                    <button type="button" class="btn btn-outline" onclick="hideAddExercise()">Abbrechen</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script>
         // Difficulty scale click handler for bulk form
         document.querySelectorAll('.difficulty-scale').forEach(function(scale) {
             scale.querySelectorAll('.difficulty-radio').forEach(function(radio) {
+                if (radio.querySelector('input').checked) {
+                    radio.style.background = 'var(--primary)';
+                    radio.style.color = 'white';
+                }
                 radio.addEventListener('click', function() {
                     scale.querySelectorAll('.difficulty-radio').forEach(function(r) {
                         r.style.background = 'transparent';
@@ -105,11 +141,49 @@
                     radio.style.color = 'white';
                     radio.querySelector('input').checked = true;
                 });
-                if (radio.querySelector('input').checked) {
-                    radio.style.background = 'var(--primary)';
-                    radio.style.color = 'white';
-                }
             });
+        });
+
+        // Save draft to session
+        function saveDraft() {
+            var form = document.getElementById('bulkForm');
+            var formData = new FormData(form);
+            var params = new URLSearchParams();
+            for (var pair of formData.entries()) {
+                params.append(pair[0], pair[1]);
+            }
+            fetch('/workouts/bulk/draft', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: params.toString()
+            }).then(function() {
+                alert('Entwurf gespeichert!');
+            }).catch(function() {
+                alert('Fehler beim Speichern');
+            });
+        }
+
+        // Show/hide add exercise modal
+        function showAddExercise() {
+            document.getElementById('addExerciseModal').style.display = 'flex';
+        }
+        function hideAddExercise() {
+            document.getElementById('addExerciseModal').style.display = 'none';
+        }
+
+        // Warn before leaving if form has data
+        window.addEventListener('beforeunload', function(e) {
+            var form = document.getElementById('bulkForm');
+            var inputs = form.querySelectorAll('input[type="number"]');
+            for (var input of inputs) {
+                if (input.value && input.value !== '0') {
+                    e.preventDefault();
+                    e.returnValue = '';
+                    return;
+                }
+            }
         });
     </script>
 </body>
