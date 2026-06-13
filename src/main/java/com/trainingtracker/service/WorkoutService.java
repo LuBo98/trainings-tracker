@@ -118,6 +118,48 @@ public class WorkoutService {
         return result;
     }
 
+    // Get workouts grouped by category and date - each workout = all entries of one day in one category
+    public Map<Category, Map<LocalDate, List<WorkoutEntry>>> getWorkoutsByCategoryAndDate(Long userId) {
+        List<WorkoutEntry> allEntries = workoutEntryRepository.findByExerciseCategoryUserIdOrderByWorkoutDateDesc(userId);
+        Map<Category, Map<LocalDate, List<WorkoutEntry>>> result = new LinkedHashMap<>();
+        for (WorkoutEntry entry : allEntries) {
+            Category cat = entry.getExercise().getCategory();
+            LocalDate date = entry.getWorkoutDate();
+            result.computeIfAbsent(cat, k -> new LinkedHashMap<>())
+                  .computeIfAbsent(date, k -> new ArrayList<>())
+                  .add(entry);
+        }
+        return result;
+    }
+
+    // Get all entries for a specific workout (category + date)
+    public List<WorkoutEntry> getWorkoutEntries(Long categoryId, LocalDate date, Long userId) {
+        Category category = exerciseRepository.findByCategoryIdOrderByCreatedAtDesc(categoryId).stream()
+                .findFirst().map(Exercise::getCategory).orElse(null);
+        if (category == null || !category.getUser().getId().equals(userId)) {
+            return Collections.emptyList();
+        }
+        List<WorkoutEntry> allEntries = workoutEntryRepository.findByExerciseCategoryIdOrderByWorkoutDateDesc(categoryId);
+        return allEntries.stream()
+                .filter(e -> e.getWorkoutDate().equals(date))
+                .collect(Collectors.toList());
+    }
+
+    // Delete entire workout (all entries of one day in one category)
+    @Transactional
+    public void deleteWorkout(Long categoryId, LocalDate date, Long userId) {
+        Category category = exerciseRepository.findByCategoryIdOrderByCreatedAtDesc(categoryId).stream()
+                .findFirst().map(Exercise::getCategory).orElse(null);
+        if (category == null || !category.getUser().getId().equals(userId)) {
+            throw new RuntimeException("Not authorized");
+        }
+        List<WorkoutEntry> entries = workoutEntryRepository.findByExerciseCategoryIdOrderByWorkoutDateDesc(categoryId)
+                .stream()
+                .filter(e -> e.getWorkoutDate().equals(date))
+                .collect(Collectors.toList());
+        workoutEntryRepository.deleteAll(entries);
+    }
+
     // Statistics methods
     public Map<String, Object> getExerciseStats(Long exerciseId, LocalDate start, LocalDate end) {
         List<WorkoutEntry> entries = findByExerciseIdAndDateRange(exerciseId, start, end);
@@ -140,7 +182,7 @@ public class WorkoutService {
         return computeStats(filtered);
     }
 
-    // Chart data for the stats page
+    // Chart data for the stats page - MEDIAN per day per category
     public Map<String, Object> getChartData(String scope, Long exerciseId, Long categoryId,
                                             Long userId, LocalDate start, LocalDate end) {
         List<WorkoutEntry> entries;
@@ -164,25 +206,43 @@ public class WorkoutService {
         // Sort by date ascending for charts
         entries.sort(Comparator.comparing(WorkoutEntry::getWorkoutDate));
 
+        // Group by date and compute MEDIAN per day
+        Map<LocalDate, List<WorkoutEntry>> byDate = entries.stream()
+                .collect(Collectors.groupingBy(WorkoutEntry::getWorkoutDate));
+
         Map<String, Object> chartData = new HashMap<>();
-        chartData.put("labels", entries.stream()
-                .map(e -> e.getWorkoutDate().toString().replace("-", "."))
-                .collect(Collectors.toList()));
-        chartData.put("volumes", entries.stream()
-                .mapToDouble(e -> e.getWeight() * e.getSets() * e.getReps())
-                .boxed().collect(Collectors.toList()));
-        chartData.put("difficulties", entries.stream()
-                .mapToInt(WorkoutEntry::getDifficulty)
-                .boxed().collect(Collectors.toList()));
-        chartData.put("weights", entries.stream()
-                .mapToDouble(WorkoutEntry::getWeight)
-                .boxed().collect(Collectors.toList()));
-        chartData.put("sets", entries.stream()
-                .mapToInt(WorkoutEntry::getSets)
-                .boxed().collect(Collectors.toList()));
-        chartData.put("reps", entries.stream()
-                .mapToInt(WorkoutEntry::getReps)
-                .boxed().collect(Collectors.toList()));
+        List<String> labels = new ArrayList<>();
+        List<Double> volumes = new ArrayList<>();
+        List<Double> difficulties = new ArrayList<>();
+        List<Double> weights = new ArrayList<>();
+        List<Double> sets = new ArrayList<>();
+        List<Double> reps = new ArrayList<>();
+
+        for (Map.Entry<LocalDate, List<WorkoutEntry>> dateEntry : byDate.entrySet()) {
+            LocalDate date = dateEntry.getKey();
+            List<WorkoutEntry> dayEntries = dateEntry.getValue();
+
+            labels.add(date.toString().replace("-", "."));
+
+            // Compute median for each metric
+            volumes.add(computeMedian(dayEntries.stream()
+                    .mapToDouble(e -> e.getWeight() * e.getSets() * e.getReps()).sorted().toArray()));
+            difficulties.add(computeMedian(dayEntries.stream()
+                    .mapToInt(WorkoutEntry::getDifficulty).asDoubleStream().sorted().toArray()));
+            weights.add(computeMedian(dayEntries.stream()
+                    .mapToDouble(WorkoutEntry::getWeight).sorted().toArray()));
+            sets.add(computeMedian(dayEntries.stream()
+                    .mapToInt(WorkoutEntry::getSets).asDoubleStream().sorted().toArray()));
+            reps.add(computeMedian(dayEntries.stream()
+                    .mapToInt(WorkoutEntry::getReps).asDoubleStream().sorted().toArray()));
+        }
+
+        chartData.put("labels", labels);
+        chartData.put("volumes", volumes);
+        chartData.put("difficulties", difficulties);
+        chartData.put("weights", weights);
+        chartData.put("sets", sets);
+        chartData.put("reps", reps);
 
         // Category breakdown (doughnut chart data)
         if (!"exercise".equals(scope)) {
@@ -198,6 +258,16 @@ public class WorkoutService {
         }
 
         return chartData;
+    }
+
+    // Compute median value from a sorted double array
+    private double computeMedian(double[] sortedValues) {
+        if (sortedValues.length == 0) return 0;
+        int mid = sortedValues.length / 2;
+        if (sortedValues.length % 2 == 0) {
+            return (sortedValues[mid - 1] + sortedValues[mid]) / 2.0;
+        }
+        return sortedValues[mid];
     }
 
     private Map<String, Object> computeStats(List<WorkoutEntry> entries) {

@@ -3,62 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workouts - Training Tracker</title>
+    <title>Workout-Verlauf - Training Tracker</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <script th:src="@{/js/nav.js}" defer></script>
     <style>
-        .category-section { margin-bottom: 1rem; }
+        .category-section { margin-bottom: 1.5rem; }
         .category-header {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 1rem; background: var(--card-bg, #1a1a2e);
+            padding: 1rem; background: var(--card-bg, white);
             border-radius: 0.5rem; cursor: pointer;
-            border: 1px solid var(--border-color, #333);
+            border: 1px solid var(--border-color, #e5e7eb);
+            font-size: 1.25rem; font-weight: 600;
         }
-        .category-header:hover { background: var(--hover-bg, #16213e); }
+        .category-header:hover { background: var(--hover-bg, #f3f4f6); }
         .category-toggle { font-size: 1.2rem; transition: transform 0.2s; }
         .category-toggle.open { transform: rotate(90deg); }
-        .exercise-entries { display: none; margin-top: 0.5rem; padding-left: 1rem; }
-        .exercise-entries.visible { display: block; }
-        .exercise-group {
-            margin-bottom: 1rem; padding: 0.5rem;
-            background: var(--card-bg, #1a1a2e); border-radius: 0.5rem;
-            border-left: 3px solid var(--primary-color, #3b82f6);
+        .workout-entries { display: none; margin-top: 0.5rem; }
+        .workout-entries.visible { display: block; }
+        .workout-card {
+            margin-bottom: 1rem; padding: 1rem;
+            background: var(--card-bg, white); border-radius: 0.5rem;
+            border: 1px solid var(--border-color, #e5e7eb);
+            border-left: 4px solid var(--primary-color, #2563eb);
         }
-        .exercise-name {
-            font-weight: bold; margin-bottom: 0.5rem;
-            color: var(--primary-color, #3b82f6);
+        .workout-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 0.75rem; padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color, #e5e7eb);
         }
-        .workout-entry-row {
-            display: grid; grid-template-columns: auto 1fr 1fr 1fr auto auto;
-            gap: 0.5rem; padding: 0.25rem 0;
-            border-bottom: 1px solid var(--border-color, #333);
-            font-size: 0.9rem;
-            align-items: center;
+        .workout-date { font-weight: 600; color: var(--primary-color, #2563eb); }
+        .workout-actions { display: flex; gap: 0.5rem; }
+        .exercise-entry {
+            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto;
+            gap: 0.5rem; padding: 0.375rem 0;
+            font-size: 0.9rem; align-items: center;
         }
-        .workout-entry-row:last-child { border-bottom: none; }
-        .entry-date { color: var(--gray-500, #9ca3af); }
+        .exercise-name { font-weight: 500; }
         .difficulty-badge {
             padding: 0.125rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;
         }
-        .difficulty-1 { background: #16a34a; color: white; }
-        .difficulty-2 { background: #ca8a04; color: white; }
-        .difficulty-3 { background: #ea580c; color: white; }
-        .difficulty-4 { background: #dc2626; color: white; }
-        .difficulty-5 { background: #7c3aed; color: white; }
-        .action-btns { display: flex; gap: 0.25rem; }
+        .difficulty-1 { background: #dcfce7; color: #166534; }
+        .difficulty-2 { background: #fef3c7; color: #92400e; }
+        .difficulty-3 { background: #ffedd5; color: #c2410c; }
+        .difficulty-4 { background: #fee2e2; color: #991b1b; }
+        .difficulty-5 { background: #f3e8ff; color: #7c3aed; }
 
         @media (max-width: 768px) {
-            .workout-entry-row {
+            .exercise-entry {
                 grid-template-columns: 1fr 1fr auto;
                 gap: 0.25rem;
                 padding: 0.5rem 0;
-            }
-            .workout-entry-row > span:nth-child(2),
-            .workout-entry-row > span:nth-child(3) {
-                display: contents;
-            }
-            .exercise-entries {
-                padding-left: 0;
             }
         }
     </style>
@@ -69,47 +63,46 @@
         <div th:replace="~{fragments/navbar :: alerts}"></div>
         <h1 class="mb-2">Workout-Verlauf</h1>
 
-        <div th:if="${#maps.isEmpty(categoryEntries)}" class="card text-center">
+        <div th:if="${#maps.isEmpty(workoutsByCategory)}" class="card text-center">
             <p>Noch keine Workouts eingetragen. Traegt dein erstes Workout ein!</p>
-            <a th:href="@{/categories}" class="btn btn-primary mt-1">Zu den Kategorien</a>
+            <a th:href="@{/workouts/bulk-landing}" class="btn btn-primary mt-1">Workout eintragen</a>
         </div>
 
-        <div th:each="catEntry : ${categoryEntries}" class="category-section">
+        <div th:each="catEntry : ${workoutsByCategory}" class="category-section">
             <div class="category-header" onclick="toggleCategory(this)">
                 <div>
-                    <h3 th:text="${catEntry.key.name}"></h3>
-                    <small style="color:var(--gray-500, #9ca3af);">
-                        <span th:text="${#maps.size(catEntry.value)}"></span> Uebungen
+                    <span th:text="${catEntry.key.name}"></span>
+                    <small style="color:var(--gray-500); font-weight:normal;">
+                        (<span th:text="${#maps.size(catEntry.value)}"></span> Workouts)
                     </small>
                 </div>
                 <span class="category-toggle">▶</span>
             </div>
 
-            <div class="exercise-entries">
-                <div th:each="exEntry : ${catEntry.value}" class="exercise-group">
-                    <div class="exercise-name">
-                        <a th:href="@{'/workouts/exercise/' + ${exEntry.key.id}}"
-                           th:text="${exEntry.key.name}"></a>
-                        <small style="color:var(--gray-500, #9ca3af);">
-                            (<span th:text="${#lists.size(exEntry.value)}"></span> Eintraege)
-                        </small>
+            <div class="workout-entries">
+                <!-- Each workout = all entries of one day -->
+                <div th:each="dateEntry : ${catEntry.value}" class="workout-card">
+                    <div class="workout-header">
+                        <span class="workout-date" th:text="${#temporals.format(dateEntry.key, 'dd.MM.yyyy')}"></span>
+                        <div class="workout-actions">
+                            <a th:href="@{'/workouts/edit?(categoryId=' + ${catEntry.key.id} + ',date=' + ${dateEntry.key} + ')'}"
+                               class="btn btn-outline btn-sm" title="Workout bearbeiten">✎</a>
+                            <a th:href="@{'/workouts/delete?(categoryId=' + ${catEntry.key.id} + ',date=' + ${dateEntry.key} + ')'}"
+                                   class="btn btn-danger btn-sm"
+                                   onclick="return confirm('Ganzes Workout fuer diesen Tag wirklich loeschen?');"
+                                   title="Workout loeschen">✕</a>
+                        </div>
                     </div>
-
-                    <div th:each="w : ${exEntry.value}" class="workout-entry-row">
-                        <span class="entry-date" th:text="${#temporals.format(w.workoutDate, 'dd.MM.yyyy')}"></span>
-                        <span><span th:text="${w.sets}"></span> x <span th:text="${w.reps}"></span></span>
-                        <span th:text="${w.weight} + ' kg'"></span>
+                    <!-- Exercise entries for this workout -->
+                    <div th:each="entry : ${dateEntry.value}" class="exercise-entry">
+                        <span class="exercise-name" th:text="${entry.exercise.name}"></span>
+                        <span><span th:text="${entry.sets}"></span> x <span th:text="${entry.reps}"></span></span>
+                        <span th:text="${entry.weight} + ' kg'"></span>
+                        <span th:text="${entry.sets * entry.reps * entry.weight} + ' kg'"></span>
                         <span>
                             <span class="difficulty-badge"
-                                  th:classappend="'difficulty-' + ${w.difficulty}"
-                                  th:text="${w.difficulty == 1 ? 'Einfach' : (w.difficulty == 2 ? 'Moderat' : (w.difficulty == 3 ? 'Anstrengend' : (w.difficulty == 4 ? 'Sehr anstrengend' : 'Nicht geschafft')))}"></span>
-                        </span>
-                        <span class="action-btns">
-                            <a th:href="@{'/workouts/edit/' + ${w.id}}"
-                               class="btn btn-outline btn-sm" title="Bearbeiten">✎</a>
-                            <a th:href="@{'/workouts/delete/' + ${w.id}}"
-                               class="btn btn-danger btn-sm"
-                               onclick="return confirm('Eintrag wirklich loeschen?');" title="Loeschen">✕</a>
+                                  th:classappend="'difficulty-' + ${entry.difficulty}"
+                                  th:text="${entry.difficulty == 1 ? 'Einfach' : (entry.difficulty == 2 ? 'Moderat' : (entry.difficulty == 3 ? 'Anstrengend' : (entry.difficulty == 4 ? 'Sehr anstrengend' : 'Nicht geschafft')))}"></span>
                         </span>
                     </div>
                 </div>

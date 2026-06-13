@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Workout - Training Tracker</title>
+    <title>Workout bearbeiten - Training Tracker</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <script th:src="@{/js/nav.js}" defer></script>
 </head>
@@ -11,77 +11,85 @@
     <nav th:replace="~{fragments/navbar :: navbar}"></nav>
     <div class="container">
         <div class="d-flex justify-between align-center mb-2">
-            <h1>Workout bearbeiten</h1>
+            <h1>Workout bearbeiten: <span th:text="${category.name}"></span></h1>
             <a th:href="@{/workouts}" class="btn btn-outline">Abbrechen</a>
         </div>
 
-        <form th:action="@{'/workouts/edit/' + ${entry.id}}" method="post">
+        <form th:action="@{/workouts/edit}" method="post">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <input type="hidden" name="categoryId" th:value="${category.id}">
+            <input type="hidden" name="workoutDate" th:value="${workoutDate}">
 
             <div class="card">
                 <div class="card-header">
-                    <span th:text="${entry.exercise.name}"></span>
+                    <span th:text="${#temporals.format(workoutDate, 'dd.MM.yyyy')}"></span>
                 </div>
-                <div style="padding:1rem;">
-                    <div class="form-group">
-                        <label for="workoutDate">Datum</label>
-                        <input type="date" id="workoutDate" name="workoutDate" class="form-control" 
-                               required th:value="${#temporals.format(entry.workoutDate, 'yyyy-MM-dd')}">
-                    </div>
-
-                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1rem;">
-                        <div class="form-group">
-                            <label for="sets">Sets</label>
-                            <input type="number" id="sets" name="sets" class="form-control" 
-                                   min="1" required th:value="${entry.sets}">
-                        </div>
-                        <div class="form-group">
-                            <label for="reps">Wiederholungen</label>
-                            <input type="number" id="reps" name="reps" class="form-control" 
-                                   min="1" required th:value="${entry.reps}">
-                        </div>
-                        <div class="form-group">
-                            <label for="weight">Gewicht (kg)</label>
-                            <input type="number" id="weight" name="weight" class="form-control" 
-                                   min="0" step="0.5" required th:value="${entry.weight}">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Anstrengung</label>
-                        <div class="difficulty-scale">
-                            <label class="difficulty-option">
-                                <input type="radio" name="difficulty" value="1" 
-                                       th:checked="${entry.difficulty == 1}" style="display:none;">
-                                <span class="difficulty-label">Einfach</span>
-                            </label>
-                            <label class="difficulty-option">
-                                <input type="radio" name="difficulty" value="2" 
-                                       th:checked="${entry.difficulty == 2}" style="display:none;">
-                                <span class="difficulty-label">Moderat</span>
-                            </label>
-                            <label class="difficulty-option">
-                                <input type="radio" name="difficulty" value="3" 
-                                       th:checked="${entry.difficulty == 3}" style="display:none;">
-                                <span class="difficulty-label">Anstrengend</span>
-                            </label>
-                            <label class="difficulty-option">
-                                <input type="radio" name="difficulty" value="4" 
-                                       th:checked="${entry.difficulty == 4}" style="display:none;">
-                                <span class="difficulty-label">Sehr anstrengend</span>
-                            </label>
-                            <label class="difficulty-option">
-                                <input type="radio" name="difficulty" value="5" 
-                                       th:checked="${entry.difficulty == 5}" style="display:none;">
-                                <span class="difficulty-label">Nicht geschafft</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="notes">Notizen</label>
-                        <textarea id="notes" name="notes" class="form-control" 
-                                  rows="3" th:value="${entry.notes}"></textarea>
+                <div style="padding:0;">
+                    <div class="table-responsive">
+                        <table class="table" style="margin-bottom:0;">
+                            <thead>
+                                <tr>
+                                    <th style="width:30%;">Uebung</th>
+                                    <th style="width:15%;">Sets</th>
+                                    <th style="width:15%;">Wdh.</th>
+                                    <th style="width:15%;">Gewicht (kg)</th>
+                                    <th style="width:25%;">Anstrengung</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="exercise : ${exercises}">
+                                    <td><strong th:text="${exercise.name}"></strong></td>
+                                    <td>
+                                        <!-- Find existing entry for this exercise -->
+                                        <input type="number" th:name="'sets_' + ${exercise.id}"
+                                               class="form-control bulk-input" min="1" placeholder="0"
+                                               style="width:80px;"
+                                               th:value="${entries.?[exercise.id == exercise.id]!{}.isEmpty() ? entries.?[exercise.id == exercise.id]![0].sets : ''}"/>
+                                    </td>
+                                    <td>
+                                        <input type="number" th:name="'reps_' + ${exercise.id}"
+                                               class="form-control bulk-input" min="1" placeholder="0"
+                                               style="width:80px;"
+                                               th:value="${entries.?[exercise.id == exercise.id]!{}.isEmpty() ? entries.?[exercise.id == exercise.id]![0].reps : ''}"/>
+                                    </td>
+                                    <td>
+                                        <input type="number" th:name="'weight_' + ${exercise.id}"
+                                               class="form-control bulk-input" min="0" step="0.5" placeholder="0"
+                                               style="width:80px;"
+                                               th:value="${entries.?[exercise.id == exercise.id]!{}.isEmpty() ? entries.?[exercise.id == exercise.id]![0].weight : ''}"/>
+                                    </td>
+                                    <td>
+                                        <div class="difficulty-scale" style="padding:0.25rem; gap:0.25rem;">
+                                            <label class="difficulty-radio" style="padding:0.25rem 0.5rem; font-size:0.8rem;">
+                                                <input type="radio" th:name="'diff_' + ${exercise.id}" th:value="1" style="display:none;"
+                                                       th:checked="${entries.?[exercise.id == exercise.id]!{}.isEmpty() ? entries.?[exercise.id == exercise.id]![0].difficulty == 1 : false}">
+                                                1
+                                            </label>
+                                            <label class="difficulty-radio" style="padding:0.25rem 0.5rem; font-size:0.8rem;">
+                                                <input type="radio" th:name="'diff_' + ${exercise.id}" th:value="2" style="display:none;"
+                                                       th:checked="${entries.?[exercise.id == exercise.id]!{}.isEmpty() ? entries.?[exercise.id == exercise.id]![0].difficulty == 2 : false}">
+                                                2
+                                            </label>
+                                            <label class="difficulty-radio" style="padding:0.25rem 0.5rem; font-size:0.8rem;">
+                                                <input type="radio" th:name="'diff_' + ${exercise.id}" th:value="3" checked style="display:none;"
+                                                       th:checked="${entries.?[exercise.id == exercise.id]!{}.isEmpty() ? entries.?[exercise.id == exercise.id]![0].difficulty == 3 : true}">
+                                                3
+                                            </label>
+                                            <label class="difficulty-radio" style="padding:0.25rem 0.5rem; font-size:0.8rem;">
+                                                <input type="radio" th:name="'diff_' + ${exercise.id}" th:value="4" style="display:none;"
+                                                       th:checked="${entries.?[exercise.id == exercise.id]!{}.isEmpty() ? entries.?[exercise.id == exercise.id]![0].difficulty == 4 : false}">
+                                                4
+                                            </label>
+                                            <label class="difficulty-radio" style="padding:0.25rem 0.5rem; font-size:0.8rem;">
+                                                <input type="radio" th:name="'diff_' + ${exercise.id}" th:value="5" style="display:none;"
+                                                       th:checked="${entries.?[exercise.id == exercise.id]!{}.isEmpty() ? entries.?[exercise.id == exercise.id]![0].difficulty == 5 : false}">
+                                                5
+                                            </label>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -94,26 +102,21 @@
     </div>
 
     <script>
-        // Difficulty scale click handler
+        // Difficulty scale click handler for bulk form
         document.querySelectorAll('.difficulty-scale').forEach(function(scale) {
-            scale.querySelectorAll('.difficulty-option').forEach(function(option) {
-                var radio = option.querySelector('input[type="radio"]');
-                var label = option.querySelector('.difficulty-label');
-                if (radio.checked) {
-                    label.style.borderColor = 'var(--primary)';
-                    label.style.background = 'var(--primary)';
-                    label.style.color = 'white';
+            scale.querySelectorAll('.difficulty-radio').forEach(function(radio) {
+                if (radio.querySelector('input').checked) {
+                    radio.style.background = 'var(--primary)';
+                    radio.style.color = 'white';
                 }
-                option.addEventListener('click', function() {
-                    scale.querySelectorAll('.difficulty-label').forEach(function(l) {
-                        l.style.borderColor = 'var(--border)';
-                        l.style.background = 'white';
-                        l.style.color = 'var(--text)';
+                radio.addEventListener('click', function() {
+                    scale.querySelectorAll('.difficulty-radio').forEach(function(r) {
+                        r.style.background = 'transparent';
+                        r.style.color = '';
                     });
-                    label.style.borderColor = 'var(--primary)';
-                    label.style.background = 'var(--primary)';
-                    label.style.color = 'white';
-                    radio.checked = true;
+                    radio.style.background = 'var(--primary)';
+                    radio.style.color = 'white';
+                    radio.querySelector('input').checked = true;
                 });
             });
         });

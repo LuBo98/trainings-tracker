@@ -45,24 +45,16 @@ public class WorkoutController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
-    // Workout overview page
+    // Workout overview page - grouped by category and date
     @GetMapping
     public String showWorkouts(@AuthenticationPrincipal UserDetails userDetails,
                                Model model) {
         Long userId = getCurrentUserId(userDetails);
-        List<com.trainingtracker.entity.WorkoutEntry> recentWorkouts = workoutService.getRecentWorkouts(userId);
+        // Group by category, then by date - each "workout" = all entries of one day in one category
+        Map<Category, Map<LocalDate, List<com.trainingtracker.entity.WorkoutEntry>>> workoutsByCategory = 
+                workoutService.getWorkoutsByCategoryAndDate(userId);
         
-        // Group by category, then by exercise within each category
-        Map<Category, Map<com.trainingtracker.entity.Exercise, List<com.trainingtracker.entity.WorkoutEntry>>> byCategory = new java.util.LinkedHashMap<>();
-        for (com.trainingtracker.entity.WorkoutEntry entry : recentWorkouts) {
-            Category cat = entry.getExercise().getCategory();
-            com.trainingtracker.entity.Exercise ex = entry.getExercise();
-            byCategory.computeIfAbsent(cat, k -> new java.util.LinkedHashMap<>())
-                     .computeIfAbsent(ex, k -> new java.util.ArrayList<>())
-                     .add(entry);
-        }
-        
-        model.addAttribute("categoryEntries", byCategory);
+        model.addAttribute("workoutsByCategory", workoutsByCategory);
         return "workouts/workouts";
     }
 
@@ -126,48 +118,91 @@ public class WorkoutController {
         return "redirect:/workouts";
     }
 
-    // EDIT workout entry - show form
-    @GetMapping("/edit/{id}")
-    public String showEditForm(@PathVariable Long id,
-                               @AuthenticationPrincipal UserDetails userDetails,
-                               Model model) {
+    // EDIT entire workout (all entries of one day in one category) - show form
+    @GetMapping("/edit")
+    public String showEditWorkout(@RequestParam Long categoryId,
+                                  @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
+                                  @AuthenticationPrincipal UserDetails userDetails,
+                                  Model model) {
         Long userId = getCurrentUserId(userDetails);
-        com.trainingtracker.entity.WorkoutEntry entry = workoutService.findByExerciseId(
-                id, userId).stream().filter(e -> e.getId().equals(id)).findFirst()
-                .orElseThrow(() -> new RuntimeException("Workout entry not found"));
-        model.addAttribute("entry", entry);
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+        if (!category.getUser().getId().equals(userId)) {
+            return "redirect:/workouts";
+        }
+        List<com.trainingtracker.entity.WorkoutEntry> entries = 
+                workoutService.getWorkoutEntries(categoryId, date, userId);
+        model.addAttribute("category", category);
+        model.addAttribute("workoutDate", date);
+        model.addAttribute("entries", entries);
+        model.addAttribute("exercises", category.getExercises());
         return "workouts/edit-workout";
     }
 
-    // Handle edit workout
-    @PostMapping("/edit/{id}")
-    public String editWorkout(@PathVariable Long id,
+    // Handle edit entire workout
+    @PostMapping("/edit")
+    public String editWorkout(@RequestParam Long categoryId,
                               @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate workoutDate,
-                              @RequestParam int sets,
-                              @RequestParam int reps,
-                              @RequestParam double weight,
-                              @RequestParam String notes,
-                              @RequestParam int difficulty,
+                              @RequestParam Map<String, String> allParams,
                               @AuthenticationPrincipal UserDetails userDetails,
                               RedirectAttributes redirectAttributes) {
         try {
             Long userId = getCurrentUserId(userDetails);
-            workoutService.updateEntry(id, workoutDate, sets, reps, weight, notes, difficulty, userId);
-            redirectAttributes.addFlashAttribute("success", "Workout aktualisiert!");
+            Category category = categoryRepository.findById(categoryId)
+                    .orElseThrow(() -> new RuntimeException("Category not found"));
+            if (!category.getUser().getId().equals(userId)) {
+                throw new RuntimeException("Not authorized");
+            }
+
+            // Get existing entries for this workout
+            List<com.trainingtracker.entity.WorkoutEntry> existingEntries = 
+                    workoutService.getWorkoutEntries(categoryId, workoutDate, userId);
+            Map<Long, com.trainingtracker.entity.WorkoutEntry> entryMap = new HashMap<>();
+            for (com.trainingtracker.entity.WorkoutEntry e : existingEntries) {
+                entryMap.put(e.getExercise().getId(), e);
+            }
+
+            int count = 0;
+            for (com.trainingtracker.entity.Exercise exercise : category.getExercises()) {
+                String setsStr = allParams.get("sets_" + exercise.getId());
+                String repsStr = allParams.get("reps_" + exercise.getId());
+                String weightStr = allParams.get("weight_" + exercise.getId());
+                String diffStr = allParams.get("diff_" + exercise.getId());
+
+                if (setsStr != null && !setsStr.isEmpty() && repsStr != null && !repsStr.isEmpty()) {
+                    int sets = Integer.parseInt(setsStr);
+                    int reps = Integer.parseInt(repsStr);
+                    double weight = (weightStr != null && !weightStr.isEmpty()) ? Double.parseDouble(weightStr) : 0;
+                    int difficulty = (diffStr != null && !diffStr.isEmpty()) ? Integer.parseInt(diffStr) : 3;
+
+                    com.trainingtracker.entity.WorkoutEntry existing = entryMap.get(exercise.getId());
+                    if (existing != null) {
+                        // Update existing entry
+                        workoutService.updateEntry(existing.getId(), workoutDate, sets, reps, weight, null, difficulty, userId);
+                    } else {
+                        // Add new entry for this exercise
+                        workoutService.addEntry(exercise.getId(), workoutDate, sets, reps, weight, null, difficulty, userId);
+                    }
+                    count++;
+                }
+            }
+
+            redirectAttributes.addFlashAttribute("success", "Workout fuer '" + category.getName() + "' aktualisiert!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Fehler: " + e.getMessage());
         }
         return "redirect:/workouts";
     }
 
-    // Delete workout entry
-    @GetMapping("/delete/{id}")
-    public String deleteWorkout(@PathVariable Long id,
+    // Delete entire workout (all entries of one day in one category)
+    @GetMapping("/delete")
+    public String deleteWorkout(@RequestParam Long categoryId,
+                                @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
                                 @AuthenticationPrincipal UserDetails userDetails,
                                 RedirectAttributes redirectAttributes) {
         try {
             Long userId = getCurrentUserId(userDetails);
-            workoutService.deleteEntry(id, userId);
+            workoutService.deleteWorkout(categoryId, date, userId);
             redirectAttributes.addFlashAttribute("success", "Workout geloescht!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Fehler: " + e.getMessage());
@@ -260,7 +295,7 @@ public class WorkoutController {
             // Clear draft from session
             session.removeAttribute("bulkDraft_" + categoryId);
             
-            redirectAttributes.addFlashAttribute("success", count + " Workout(s) fuer '" + category.getName() + "' eingetragen!");
+            redirectAttributes.addFlashAttribute("success", "Workout fuer '" + category.getName() + "' eingetragen!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Fehler: " + e.getMessage());
         }
