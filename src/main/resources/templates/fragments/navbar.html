@@ -13,6 +13,7 @@
     </button>
     <ul class="navbar-nav" id="navMenu" sec:authorize="isAuthenticated()">
         <li><a th:href="@{/auth/dashboard}">Dashboard</a></li>
+        <li><a th:href="@{/workouts/bulk-landing}">Workout eintragen</a></li>
         <li><a th:href="@{/categories}">Kategorien</a></li>
         <li><a th:href="@{/workouts}">Workouts</a></li>
         <li><a th:href="@{/stats}">Statistik</a></li>
